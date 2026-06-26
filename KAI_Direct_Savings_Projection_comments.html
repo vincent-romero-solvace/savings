@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvace AI Savings Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --electric-blue: #1a1aff;
+  --electric-dark-blue: #001391;
+  --bg: #f5f5f7; --bg2: #ffffff; --bg3: #ededf2; --bg4: #dcdce8;
+  --border: rgba(26,26,255,0.10); --border2: rgba(26,26,255,0.18);
+  --text: #0a0a1a; --text2: #4a4a6a; --text3: #8a8aaa;
+  --info-bg: rgba(26,26,255,0.05); --info-border: rgba(26,26,255,0.20);
+  --info-text: #1a1aff; --info-body: #2a2a6e;
+  --mono: 'Inter', monospace; --serif: 'Space Grotesk', sans-serif; --sans: 'Inter', sans-serif;
+  --r: 10px; --r2: 14px;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; min-height: 100vh;
+  background-image: radial-gradient(ellipse at 10% 0%, rgba(26,26,255,0.04) 0%, transparent 50%);
+}
+
+/* ── REVIEW PANEL ── */
+body.comment-mode{cursor:crosshair!important;}
+body.comment-mode *{cursor:crosshair!important;}
+#review-panel{position:fixed;top:70px;right:0;width:260px;background:#1a1a2e;color:#fff;border-radius:12px 0 0 12px;z-index:9000;box-shadow:-4px 0 24px rgba(0,0,0,0.2);font-family:var(--sans);overflow:hidden;transition:transform .25s;}
+#review-panel.collapsed{transform:translateX(260px);}
+#rp-fab{position:fixed;top:70px;right:12px;width:40px;height:40px;border-radius:50%;background:#1a1a2e;color:#fff;border:none;font-size:18px;cursor:pointer;z-index:8999;box-shadow:0 4px 14px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;transition:background .15s;}
+#rp-fab:hover{background:#2a2a4e;}
+#rp-fab.hidden{display:none;}
+#rp-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#12122a;border-bottom:1px solid rgba(255,255,255,0.08);}
+#rp-title{font-family:var(--serif);font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;}
+#rp-dot{width:8px;height:8px;border-radius:50%;background:#cc2200;flex-shrink:0;}
+#rp-dot.live{background:#00cc66;animation:rp-pulse 1.5s infinite;}
+@keyframes rp-pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+#rp-collapse{background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:14px;padding:0;line-height:1;}
+#rp-collapse:hover{color:#fff;}
+#rp-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
+#rp-name-inp{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:7px;color:#fff;font-family:var(--mono);font-size:11px;padding:6px 9px;outline:none;}
+#rp-name-inp:focus{border-color:rgba(100,100,255,0.6);}
+#rp-name-inp::placeholder{color:rgba(255,255,255,0.3);}
+#rp-toggle-btn{width:100%;padding:7px;border-radius:7px;border:none;background:rgba(255,255,255,0.10);color:#fff;font-family:var(--mono);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s;}
+#rp-toggle-btn:hover{background:rgba(255,255,255,0.18);}
+#rp-toggle-btn.active{background:rgba(26,26,255,0.5);border:1px solid rgba(100,100,255,0.5);}
+.rp-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.rp-btn{padding:6px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.8);font-family:var(--mono);font-size:10px;cursor:pointer;text-align:center;transition:background .15s;}
+.rp-btn:hover{background:rgba(255,255,255,0.14);color:#fff;}
+#rp-list{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-top:2px;}
+#rp-list::-webkit-scrollbar{width:3px;}
+#rp-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:2px;}
+.rp-note-item{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background .12s;}
+.rp-note-item:hover{background:rgba(255,255,255,0.12);}
+.rp-note-author{font-family:var(--mono);font-size:9px;color:rgba(100,180,255,0.9);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;}
+.rp-note-text{font-size:11px;color:rgba(255,255,255,0.85);margin-top:2px;line-height:1.4;word-break:break-word;}
+.rp-note-date{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,0.3);margin-top:4px;}
+.rp-note-del{float:right;background:none;border:none;color:rgba(255,100,100,0.5);cursor:pointer;font-size:11px;padding:0;line-height:1;}
+.rp-note-del:hover{color:#ff6666;}
+#rp-empty{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);text-align:center;padding:12px 0;}
+#rp-backend-tag{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,0.25);text-align:center;padding:6px 0 2px;}
+#comment-hint{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1aff;color:#fff;font-family:var(--mono);font-size:11px;padding:6px 18px;border-radius:20px;z-index:9100;pointer-events:none;box-shadow:0 4px 16px rgba(26,26,255,0.35);opacity:0;transition:opacity .2s;}
+#comment-hint.show{opacity:1;}
+.cm-marker{position:absolute;z-index:8000;width:24px;height:24px;border-radius:50%;background:#1a1aff;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--mono);transition:transform .15s;}
+.cm-marker:hover{transform:scale(1.2);}
+#cm-popup{position:fixed;z-index:9500;background:#fff;border:1px solid rgba(26,26,255,0.18);border-radius:12px;padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);width:280px;display:none;}
+#cm-popup h4{font-family:var(--serif);font-size:13px;font-weight:700;margin-bottom:10px;color:#0a0a1a;}
+#cm-text-inp{width:100%;height:72px;resize:none;background:#ededf2;border:1px solid rgba(26,26,255,0.18);border-radius:6px;font-family:var(--sans);font-size:12px;padding:6px 8px;outline:none;color:#0a0a1a;margin-bottom:10px;}
+#cm-text-inp:focus{border-color:rgba(26,26,255,0.5);}
+.cm-popup-btns{display:flex;gap:6px;justify-content:flex-end;}
+.cm-popup-btns button{font-size:11px;padding:5px 12px;border-radius:7px;cursor:pointer;border:1px solid rgba(26,26,255,0.18);background:transparent;color:#4a4a6a;}
+.cm-popup-btns button.pri{background:rgba(26,26,255,0.10);border-color:rgba(26,26,255,0.25);color:#1a1aff;font-weight:600;}
+.cm-popup-btns button.pri:hover{background:#1a1aff;color:#fff;}
+
+/* NAV */
+.solvace-nav { background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(26,26,255,0.12); padding: 10px 0; position: sticky; top: 0; z-index: 100; }
+.solvace-nav-inner { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+.solvace-nav-tag { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+.page { max-width: 1080px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+/* HERO */
+.hero { margin-bottom: 1.5rem; padding-bottom: 1.75rem; border-bottom: 1px solid var(--border); }
+.hero-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(26,26,255,0.06); border: 1px solid rgba(26,26,255,0.20); border-radius: 20px; font-family: var(--mono); font-size: 10px; color: var(--electric-blue); letter-spacing: 0.10em; margin-bottom: 12px; text-transform: uppercase; }
+.hero-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--electric-blue); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.hero h1 { font-family: var(--serif); font-size: 32px; font-weight: 600; line-height: 1.2; margin-bottom: 6px; }
+.hero h1 em { font-style: italic; color: var(--electric-blue); }
+.hero p { font-size: 13px; color: var(--text2); max-width: 580px; line-height: 1.65; }
+.hero-inputs { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-top: 20px; }
+.hi { background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r); padding: 10px 14px; }
+.hi-lbl { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; }
+.hi-row { display: flex; align-items: center; gap: 5px; }
+.hi-u { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+.hi-row input, .hi-row select { flex: 1; min-width: 0; background: transparent; border: none; color: var(--text); font-family: var(--mono); font-size: 14px; font-weight: 500; outline: none; padding: 0; }
+.hi-row select { cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a9990'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 2px center; padding-right: 16px; }
+
+/* TOP CARD */
+.top-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; gap: 0; align-items: stretch; animation: fadeUp .3s ease .04s both; margin-bottom: 20px; }
+.top-card-left { flex: 0 0 260px; padding-right: 28px; }
+.top-card-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+.top-card-right { flex: 1; padding-left: 28px; }
+@media (max-width: 800px) {
+  .top-card { flex-direction: column; }
+  .top-card-left { flex: none; padding-right: 0; padding-bottom: 20px; }
+  .top-card-divider { width: 100%; height: 1px; }
+  .top-card-right { padding-left: 0; padding-top: 20px; }
+  .hero-inputs { grid-template-columns: 1fr 1fr; }
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+/* PANELS */
+.left-col { display: flex; flex-direction: column; gap: 14px; }
+.panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); animation: fadeUp .3s ease both; }
+.panel:nth-child(1){animation-delay:.04s} .panel:nth-child(2){animation-delay:.08s}
+.panel:nth-child(3){animation-delay:.12s} .panel:nth-child(4){animation-delay:.16s}
+.panel:nth-child(5){animation-delay:.20s} .panel:nth-child(6){animation-delay:.24s}
+.panel-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: background .1s; }
+.panel-head:hover { background: rgba(26,26,255,0.04); }
+.panel-head-left { display: flex; align-items: center; gap: 10px; }
+.panel-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.panel-title { font-size: 13px; font-weight: 500; }
+.panel-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.panel-right { display: flex; align-items: center; gap: 10px; }
+.panel-total { font-family: var(--mono); font-size: 13px; color: var(--electric-blue); font-weight: 600; min-width: 70px; text-align: right; }
+.chev { color: var(--text3); font-size: 10px; transition: transform .2s; display: inline-block; }
+.chev.open { transform: rotate(180deg); }
+.panel-body { display: none; }
+.panel-body.open { display: block; }
+
+/* SUB-AGENT HEADER inside panel */
+.agent-header { padding: 9px 18px 7px; background: var(--bg3); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 7px; }
+.agent-header-name { font-size: 11px; font-weight: 600; color: var(--text2); }
+.agent-header-rate { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+/* SKILL ROWS */
+.lever-item { padding: 11px 18px; border-bottom: 1px solid var(--border); }
+.lever-item:last-child { border-bottom: none; }
+.lever-main { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; }
+.lever-item.off .lname { color: var(--text3); }
+.lever-item.off .lever-controls { opacity: 0.35; pointer-events: none; }
+
+.lname { font-size: 12px; font-weight: 500; margin-bottom: 7px; }
+.tbc-tag { font-size: 9px; font-family: var(--mono); color: var(--text3); background: var(--bg3); border: 1px solid var(--border2); border-radius: 4px; padding: 1px 4px; margin-left: 5px; vertical-align: middle; }
+
+/* Uses slider */
+.lever-controls { display: flex; flex-direction: column; gap: 5px; }
+.uses-row { display: flex; align-items: center; gap: 10px; }
+.uses-row-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; min-width: 66px; }
+.uses-slider-wrap { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.uses-slider { width: 100%; -webkit-appearance: none; appearance: none; height: 3px; background: var(--bg4); border-radius: 2px; outline: none; cursor: pointer; }
+.uses-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--electric-blue); cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(26,26,255,0.35); transition: transform .1s; }
+.uses-slider:hover::-webkit-slider-thumb { transform: scale(1.15); }
+.uses-ticks { display: flex; justify-content: space-between; padding: 0 1px; }
+.uses-tick { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.uses-tick.active { color: var(--electric-blue); font-weight: 600; }
+.uses-val { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--electric-blue); white-space: nowrap; min-width: 52px; text-align: right; }
+
+/* Editable params row */
+.params-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.param-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; padding: 3px 8px; font-family: var(--mono); font-size: 11px; color: var(--text2); }
+.param-chip span { color: var(--text3); font-size: 10px; }
+.param-input { background: transparent; border: none; outline: none; font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text); width: 34px; text-align: right; padding: 0; }
+.param-input:focus { color: var(--electric-blue); }
+.param-eq { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.param-result { font-weight: 600; color: var(--electric-blue); }
+
+/* Tooltip */
+.tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+.tooltip-icon { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--border2); background: var(--bg3); color: var(--text3); font-size: 9px; font-family: var(--mono); display: inline-flex; align-items: center; justify-content: center; cursor: default; line-height: 1; flex-shrink: 0; transition: border-color .15s, color .15s; }
+.tooltip-wrap:hover .tooltip-icon { border-color: var(--electric-blue); color: var(--electric-blue); }
+.tooltip-box { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; font-family: var(--mono); font-size: 10px; line-height: 1.5; white-space: nowrap; padding: 6px 10px; border-radius: 6px; pointer-events: none; z-index: 10; }
+.tooltip-box::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: var(--text); }
+.tooltip-wrap:hover .tooltip-box { display: block; }
+
+/* toggle + value */
+.lval { font-family: var(--mono); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.lval.on { color: var(--electric-blue); }
+.lval.off { color: var(--text3); }
+.lright { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.tog { position: relative; width: 34px; height: 19px; flex-shrink: 0; }
+.tog input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; z-index: 1; }
+.tog-t { position: absolute; inset: 0; background: var(--bg4); border: 1px solid var(--border2); border-radius: 10px; transition: background .15s, border-color .15s; pointer-events: none; }
+.tog-k { position: absolute; top: 3px; left: 3px; width: 13px; height: 13px; background: var(--text3); border-radius: 50%; transition: transform .15s, background .15s; pointer-events: none; }
+.tog input:checked ~ .tog-t { background: rgba(26,26,255,0.12); border-color: var(--electric-blue); }
+.tog input:checked ~ .tog-k { transform: translateX(15px); background: var(--electric-blue); box-shadow: 0 1px 4px rgba(26,26,255,0.4); }
+
+/* Role group header — shows role name + shared $/hr */
+.role-group-header { display: flex; align-items: center; gap: 10px; padding: 7px 18px 6px; background: var(--bg3); border-bottom: 1px solid var(--border); }
+.role-group-name { font-size: 10px; font-weight: 600; color: var(--text2); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.assump { font-size: 10px; color: var(--text3); line-height: 1.5; padding: 9px 18px; background: var(--bg3); border-top: 1px solid var(--border); font-family: var(--mono); }
+.assump strong { color: var(--text2); }
+
+/* SUMMARY */
+.sum-ey { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+.big-num { font-family: var(--serif); font-size: 42px; font-weight: 700; color: var(--electric-blue); line-height: 1; margin-bottom: 3px; word-break: break-all; letter-spacing: -0.02em; }
+.big-lbl { font-size: 12px; color: var(--text2); margin-bottom: 18px; }
+.chart-ttl { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+.lrow { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.ldot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.btn { width: 100%; padding: 10px 16px; border-radius: var(--r); font-family: var(--sans); font-size: 13px; cursor: pointer; border: 1px solid var(--border2); background: transparent; color: var(--text2); transition: all .15s; }
+.btn:hover { background: var(--bg3); color: var(--text); }
+.btn.pri { background: rgba(26,26,255,0.08); border-color: rgba(26,26,255,0.25); color: var(--electric-blue); font-weight: 500; }
+.btn.pri:hover { background: rgba(26,26,255,0.14); }
+</style>
+</head>
+<body>
+
+<nav class="solvace-nav">
+  <div class="solvace-nav-inner">
+    <div>
+      <svg height="28" viewBox="0 0 283.4645669 46.2199992" xmlns="http://www.w3.org/2000/svg">
+        <defs><style>.st0{fill:#1a1aff;}</style></defs>
+        <path d="M103.3714148,22.9088652c-2.0260224-.9396078-4.3119993-1.680659-6.8589723-2.2238663l-3.2575993-.8141257c-1.9212073-.4590592-3.5699065-.9915219-4.9481806-1.5973332-1.3783289-.6050438-2.4431995-1.388032-3.1947212-2.3491291-.7515218-.9601103-1.1278034-2.2129024-1.1278034-3.7583763,0-2.3381103.8772779-4.1440321,2.6307921-5.4183134,1.7546106-1.2734591,4.0719991-1.9104627,6.9533168-1.9104627,2.0045879,0,3.790062.3131295,5.3559836.9396626,1.5658668.626259,2.7969503,1.587356,3.6957175,2.8813176.8971774,1.2949484,1.3468077,3.0067997,1.3468077,5.1363763v2.6310662h5.198761v-2.6310662c0-3.0065804-.6792147-5.5014199-2.0354514-7.4852861-1.3578812-1.9830438-3.2167587-3.4863066-5.5750426-4.5100625-2.3598737-1.0229884-5.0221323-1.5347292-7.9867757-1.5347292-2.9232546,0-5.5026808.4805485-7.7362502,1.4406588-2.2346109.961097-3.9676775,2.3391519-5.198761,4.134329-1.2325637,1.7959994-1.8478039,3.9257953-1.8478039,6.3891684,0,2.4644147.5528556,4.4786509,1.6597179,6.0448465,1.1062593,1.5658668,2.6407145,2.8294035,4.6039136,3.7895138,1.9625961.961097,4.2176548,1.7754969,6.7656693,2.4431995l3.2565577.8141257c1.9625961.4601008,3.6747216.9925635,5.1368697,1.5973332,1.4611065.6058113,2.5993805,1.3887995,3.4137803,2.3491291.8143998.9611519,1.2215997,2.2550586,1.2215997,3.8835842,0,2.3392067-.8987672,4.2811359-2.693725,5.8255134-1.7959446,1.5454739-4.4063438,2.3177174-7.8300465,2.3177174-3.3414185,0-6.0760389-.8867069-8.2058348-2.6622586-2.1297959-1.7745101-3.1947212-4.4787057-3.1947212-8.1117643v-1.3153961h-5.1987062v1.3153961c0,3.424525.7200553,6.2746503,2.1612623,8.5501566,1.4401106,2.2767672,3.4137255,3.9776546,5.9187615,5.1051839,2.5061324,1.1275293,5.345513,1.6914036,8.5192384,1.6914036,3.173232,0,5.9403056-.5324627,8.3001793-1.5973332,2.3582839-1.0649254,4.1862432-2.5574435,5.4806433-4.4787057,1.2939616-1.9204399,1.9422032-4.1754985,1.9422032-6.7651211,0-2.5889099-.6058113-4.6872942-1.8163923-6.2953721-1.2121708-1.6070363-2.8299517-2.8815917-4.8549873-3.8209802ZM137.0143616,15.4233598c-2.3593255-1.2939068-5.0844621-1.9418743-8.1743683-1.9418743-3.0909478,0-5.8155362.6479676-8.1743683,1.9418743-2.3598737,1.2947291-4.1967137,3.1318432-5.5121098,5.5121646-1.3154509,2.3805407-1.9736697,5.1580848-1.9736697,8.3313168v.8141257c0,3.2162105.6582188,6.0037318,1.9736697,8.362564,1.3153961,2.3598737,3.1522361,4.1870106,5.5121098,5.4809174,2.3588321,1.2939068,5.0834206,1.9419292,8.1743683,1.9419292,3.0899062,0,5.8150428-.6480224,8.1743683-1.9419292,2.3593803-1.2939068,4.1972619-3.1210437,5.512658-5.4809174,1.3153961-2.3588321,1.9731215-5.1463535,1.9731215-8.362564v-.8141257c0-3.173232-.6577254-5.9507761-1.9731215-8.3313168-1.3153961-2.3803214-3.1532776-4.2174355-5.512658-5.5121646ZM139.5519056,29.955759c0,3.5077959-.9716224,6.2953172-2.9127841,8.3625092-1.9421484,2.0671919-4.5415289,3.1006508-7.7991282,3.1006508-3.2156623,0-5.8045723-1.0334589-7.7671684-3.1006508-1.9636925-2.0671919-2.9441957-4.8547132-2.9441957-8.3625092v-.563655c0-3.5078507.9805032-6.2953172,2.9441957-8.3625092,1.9625961-2.0671919,4.5515061-3.1006508,7.7671684-3.1006508,3.2575993,0,5.8569798,1.0334589,7.7991282,3.1006508,1.9411617,2.0671919,2.9127841,4.8546584,2.9127841,8.3625092v.563655ZM149.3791942,44.9893737h4.949277V1.141541h-4.949277v43.8478327ZM172.9757932,41.2936562h-.8772779l-9.207882-26.9351669h-5.2615842l10.9618896,30.6308844h7.8929245l10.9613963-30.6308844h-5.2616391l-9.2078272,26.9351669ZM214.574104,38.9133348v-13.8434814c0-3.6742282-1.0865243-6.5243535-3.2571607-8.5503759-2.1721714-2.0249808-5.2206888-3.037992-9.1454425-3.037992-2.5480145,0-4.7291764.4286344-6.5455687,1.2842037-1.8169405.8563368-3.2680698,1.9838661-4.3539363,3.382588-1.0858664,1.3994893-1.8793252,2.9546663-2.3803214,4.6665176l4.6358734,1.5033176c.5009962-2.0043138,1.4401654-3.6016471,2.8184396-4.7918352,1.3783289-1.1901333,3.2984399-1.7851999,5.7625805-1.7851999,2.5061324,0,4.3948865.626259,5.669442,1.8790511,1.2733494,1.2527373,1.9101338,2.965685,1.9101338,5.1365956v2.2550586h-10.3355758c-2.1717329,0-4.1343838.3443218-5.887898,1.0334589-1.7540624.6891371-3.1318432,1.7129477-4.1343838,3.0694585-1.0024858,1.357333-1.5035369,3.079929-1.5035369,5.1678427,0,2.0464701.5010511,3.7798107,1.5035369,5.1989803,1.0025407,1.4202111,2.3803214,2.5055294,4.1343838,3.2573252,1.7535142.7515218,3.6956626,1.1275293,5.8255134,1.1275293s3.862369-.2819372,5.198761-.8455922c1.336392-.5638743,2.3902438-1.2734591,3.1632-2.1297959.7725177-.8555145,1.3882513-1.680659,1.8478587-2.4743918h.7521248v.3131295c0,1.2950032.4166289,2.3284621,1.2529565,3.1009249.8343542.773011,1.9417099,1.1587217,3.3194358,1.1587217h4.3225247v-4.1969878h-2.8189329c-1.1697404,0-1.7540076-.626259-1.7540076-1.8790511ZM209.6881436,31.7097666c0,3.1318432-.908251,5.5650655-2.7245336,7.2973645-1.8165019,1.7333406-4.1873396,2.5996546-7.1095526,2.5996546-2.0889553,0-3.7900072-.4795618-5.1054032-1.4406588-1.3154509-.9601103-1.9731215-2.2962282-1.9731215-4.0091211,0-1.7115772.6361813-2.9958358,1.9101886-3.8521178,1.2735139-.8555693,2.8918978-1.2842585,4.8549873-1.2842585h10.147435v.6891371ZM242.567618,39.0385976c-1.6079682,1.5874109-3.9369237,2.3803214-6.984235,2.3803214-2.0465249,0-3.8739908-.4591141-5.4813011-1.3780548-1.6077489-.9181733-2.8813176-2.2335694-3.8209254-3.9464623-.9396078-1.7116321-1.4091924-3.7583763-1.4091924-6.1386429v-.563655c0-2.3803214.4695846-4.426024,1.4091924-6.1389169.9396078-1.7115772,2.2131765-3.0272474,3.8209254-3.9461882,1.6073104-.9181733,3.4347762-1.3780548,5.4813011-1.3780548,2.0044235,0,3.6957175.3757335,5.0734434,1.1275293,1.3782741.7517959,2.4526284,1.7537883,3.2261329,3.0065804.772408,1.2530114,1.2629337,2.6310662,1.4721253,4.134329l4.8230275-1.0022666c-.3343995-2.0454285-1.0959532-3.96691-2.2859769-5.7629094-1.1906815-1.794903-2.8190426-3.2355618-4.886399-4.3219765-2.0669178-1.0855923-4.5625248-1.6287448-7.4852861-1.6287448-2.9657398,0-5.6279984.6372229-7.9862275,1.9104627-2.3598737,1.2742814-4.218806,3.0909478-5.5750426,5.4497799-1.357333,2.3595996-2.0359996,5.1892772-2.0359996,8.4877719v.688863c0,3.2573252.6786665,6.0760389,2.0359996,8.4563055,1.3562367,2.3803214,3.2151689,4.2077324,5.5750426,5.4812463,2.3582291,1.273185,5.0204877,1.9104627,7.9862275,1.9104627,2.9227613,0,5.4183683-.5432073,7.4852861-1.6287997,2.0673564-1.0853182,3.7061332-2.5259771,4.9177558-4.3219765,1.2106358-1.7951771,2.0454285-3.6957175,2.505036-5.7002506l-4.8853026-1.0649254c-.3762817,2.3392067-1.3689548,4.3015288-2.9756073,5.8881721ZM283.4645669,28.7029669c0-3.0899062-.626259-5.7833571-1.8792155-8.080572-1.252518-2.2962282-2.9861327-4.0607611-5.198761-5.2931055-2.2137247-1.231248-4.7606428-1.8478039-7.6419605-1.8478039-2.9661784,0-5.5970801.6576706-7.8929245,1.9730667-2.2969408,1.3153961-4.0930499,3.1635289-5.3869018,5.5438503-1.2949484,2.3803214-1.9421484,5.1578656-1.9421484,8.3310975v.7514669c0,3.1321173.6472001,5.8881721,1.9421484,8.2684936,1.293852,2.3802666,3.1103539,4.2281253,5.4491769,5.5437955,2.3383844,1.3153961,5.0530505,1.9731215,8.1435597,1.9731215,2.7561097,0,5.0210359-.4386664,6.7965327-1.3153961,1.7746198-.8770586,3.2152786-1.9623769,4.3219765-3.2573252,1.106369-1.2939068,1.9731763-2.5889099,2.5999835-3.8835842l-4.2597014-2.0671919c-.7514669,1.6707366-1.8384298,3.1113955-3.2575993,4.3219765-1.4201563,1.2118967-3.4450823,1.8166664-6.0759841,1.8166664-3.0065256,0-5.5121098-.9289179-7.5166429-2.7875213-2.0046428-1.8575618-3.0694585-4.4367139-3.1946664-7.7359761h24.9931281v-2.2550586ZM258.5337139,26.8865198c.4171771-2.8393807,1.5239846-5.0525023,3.3205322-6.6399132,1.794903-1.5865886,4.0919535-2.3802666,6.8903839-2.3802666,2.7555615,0,5.0205973.793678,6.7960942,2.3802666,1.7745101,1.5874109,2.7455843,3.8005325,2.9127841,6.6399132h-19.9197944Z"/>
+        <path class="st0" d="M63.8672641,4.7088646c0-2.5898755-2.1189891-4.7088646-4.7088646-4.7088646h-28.1929003c-2.5898755,0-4.7088646,2.1189891-4.7088646,4.7088646v10.6107625c0,2.5898755-2.1189891,4.7088646-4.7088646,4.7088646H4.7088646C2.1189891,20.0284916,0,22.1474807,0,24.7373562v16.7737784C0,44.1010102,2.1189891,46.2199992,4.7088646,46.2199992h28.1929003c2.5898755,0,4.7088646-2.1189891,4.7088646-4.7088646v-10.6110245c0-2.5898755,2.1189891-4.7088646,4.7088646-4.7088646h16.8389054c2.5898755,0,4.7088646-2.1189891,4.7088646-4.7088646V4.7088646Z"/>
+      </svg>
+    </div>
+    <span class="solvace-nav-tag">AI Savings Calculator</span>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-badge"><span class="hero-dot"></span>AI SAVINGS CALCULATOR</div>
+    <h1>What value could Solvace <em>AI Agents</em> unlock for you?</h1>
+    <p>Enable the skills relevant to your operations and set how many times each is used per year. Each use replaces real human work — adjust the hourly rate and minutes saved to match your context.</p>
+    <div class="hero-inputs" style="grid-template-columns:200px;">
+      <div class="hi">
+        <div class="hi-lbl">Currency</div>
+        <div class="hi-row">
+          <select id="currency" onchange="updateCurrency()">
+            <option value="$" selected>$ USD</option>
+            <option value="€">€ EUR</option>
+            <option value="£">£ GBP</option>
+            <option value="CHF">CHF</option>
+            <option value="CA$">CA$ CAD</option>
+            <option value="A$">A$ AUD</option>
+            <option value="¥">¥ JPY</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary card -->
+  <div class="top-card">
+    <div class="top-card-left">
+      <div class="sum-ey">Estimated annual value unlocked</div>
+      <div class="big-num" id="big-tot">$0</div>
+      <div class="big-lbl">in annual value with Solvace AI Agents</div>
+      <div style="display:flex;gap:8px;margin-top:18px;">
+        <button class="btn pri" style="flex:1;" onclick="enableAll()">Enable all skills</button>
+        <button class="btn" style="flex:1;" onclick="resetAll()">Reset defaults</button>
+      </div>
+    </div>
+    <div class="top-card-divider"></div>
+    <div class="top-card-right">
+      <div class="chart-ttl">Value breakdown by agent category</div>
+      <div style="display:flex;gap:20px;align-items:center;">
+        <div style="position:relative;width:140px;height:140px;flex-shrink:0;"><canvas id="donut"></canvas></div>
+        <div id="legend" style="flex:1;"></div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-bottom:20px;"></div>
+
+  <div class="left-col" id="panels-container"></div>
+</div>
+
+<script>
+// ── STEPS ─────────────────────────────────────────────────────────────────────
+const STEPS = [5, 10, 25, 50, 100, 1000, 10000];
+const STEP_LABELS = ['5','10','25','50','100','1k','10k'];
+const DEFAULT_STEP_IDX = 2;
+
+// ── CURRENCY ──────────────────────────────────────────────────────────────────
+function getCurrency() { return (document.getElementById('currency')||{value:'$'}).value; }
+function updateCurrency() {
+  const sym = getCurrency();
+  const rs = document.getElementById('rev-symbol');
+  if (rs) rs.textContent = sym.length<=1 ? sym : (sym.replace(/[A-Z]/g,'').trim()||sym[0]);
+  recalc();
+}
+function fmt(n) {
+  const sym = getCurrency(); n = Math.round(n);
+  if (n>=1000000) return sym+(n/1000000).toFixed(2)+'M';
+  if (n>=1000) return sym+Math.round(n/1000)+'K';
+  return sym+n.toLocaleString('en-US');
+}
+function fmtFull(n) { return getCurrency()+Math.round(n).toLocaleString('en-US'); }
+
+// ── SECTIONS ──────────────────────────────────────────────────────────────────
+const SECS = [
+  { id:'analyst',    label:'Analyst Agents',    color:'#1a1aff', icon:'🔍', sub:'Performance · Quality · HSE · Maintenance · CI · Knowledge · Project · HR' },
+  { id:'expert',     label:'Expert Agents',     color:'#001391', icon:'🧠', sub:'Process Expert' },
+  { id:'assistant',  label:'Assistant Agents',  color:'#5555ff', icon:'🤖', sub:'Data Assistant · Personal Assistant · Configuration Assistant' },
+  { id:'content',    label:'Content Agents',    color:'#0044cc', icon:'✍️', sub:'Content Creator · Content Upload' },
+  { id:'supervisor', label:'Supervisor Agents', color:'#3388ff', icon:'👁️', sub:'Supervisor' },
+  { id:'solvace',    label:'Solvace Agents',    color:'#88aaff', icon:'⚡', sub:'Solvace Coach' },
+];
+
+// ── LEVERS (individual skills from the slide) ─────────────────────────────────
+// ratePerHr: loaded hourly cost of human role replaced
+// minsPerUse: human minutes replaced per single agent use
+const LEVERS = [
+
+  // ── ANALYST AGENTS (deduplicated — shared skills listed once) ───────────
+  // Shared across Performance / Quality / HSE / Maintenance / CI / Project analysts
+  { sec:'analyst', role:'Analyst', id:'an1', on:true,  name:'KPI search',                    ratePerHr:65, minsPerUse:20 },
+  { sec:'analyst', role:'Analyst', id:'an2', on:true,  name:'Register search',               ratePerHr:65, minsPerUse:20 },
+  { sec:'analyst', role:'Analyst', id:'an3', on:true,  name:'Chart creation',                ratePerHr:65, minsPerUse:30 },
+  { sec:'analyst', role:'Analyst', id:'an4', on:true,  name:'Module analysis',               ratePerHr:65, minsPerUse:40 },
+  { sec:'analyst', role:'Analyst', id:'an5', on:false, name:'Comment analysis',              ratePerHr:65, minsPerUse:35 },
+  // Performance Analyst specific
+  { sec:'analyst', role:'Analyst', id:'an6', on:true,  name:'Board analysis',                ratePerHr:65, minsPerUse:40 },
+  { sec:'analyst', role:'Analyst', id:'an7', on:true,  name:'Meeting assistance',            ratePerHr:65, minsPerUse:30 },
+  { sec:'analyst', role:'Analyst', id:'an8', on:true,  name:'KPI analysis',                  ratePerHr:65, minsPerUse:35 },
+  { sec:'analyst', role:'Analyst', id:'an9', on:false, name:'Real-time meeting insights',    ratePerHr:65, minsPerUse:45, tbc:true },
+  { sec:'analyst', role:'Analyst', id:'an10',on:false, name:'Meeting agenda',                ratePerHr:65, minsPerUse:25, tbc:true },
+  { sec:'analyst', role:'Analyst', id:'an11',on:false, name:'Meeting guide',                 ratePerHr:65, minsPerUse:20, tbc:true },
+  // Maintenance Analyst specific
+  { sec:'analyst', role:'Analyst', id:'an12',on:false, name:'Work Order opening',            ratePerHr:65, minsPerUse:15, tbc:true },
+  // Project Analyst specific
+  { sec:'analyst', role:'Analyst', id:'an13',on:false, name:'Project meeting assistance',    ratePerHr:65, minsPerUse:45 },
+  { sec:'analyst', role:'Analyst', id:'an14',on:false, name:'Project report',                ratePerHr:65, minsPerUse:60 },
+  { sec:'analyst', role:'Analyst', id:'an15',on:false, name:'Project portfolio report',      ratePerHr:65, minsPerUse:90 },
+  // Knowledge Analyst specific
+  { sec:'analyst', role:'Analyst', id:'an16',on:false, name:'Video translation',             ratePerHr:55, minsPerUse:60 },
+  { sec:'analyst', role:'Analyst', id:'an17',on:false, name:'Content search',               ratePerHr:55, minsPerUse:20 },
+  { sec:'analyst', role:'Analyst', id:'an18',on:false, name:'Training coach',               ratePerHr:55, minsPerUse:30 },
+  { sec:'analyst', role:'Analyst', id:'an19',on:false, name:'External content search',      ratePerHr:55, minsPerUse:25 },
+  // HR Analyst specific
+  { sec:'analyst', role:'Analyst', id:'an20',on:false, name:'HR Policies search',           ratePerHr:65, minsPerUse:20 },
+  { sec:'analyst', role:'Analyst', id:'an21',on:false, name:'Calendar search',              ratePerHr:65, minsPerUse:10 },
+  { sec:'analyst', role:'Analyst', id:'an22',on:false, name:'HR requests',                  ratePerHr:65, minsPerUse:25 },
+  { sec:'analyst', role:'Analyst', id:'an23',on:false, name:'Birthdays reminders',          ratePerHr:35, minsPerUse:5  },
+
+  // ── PROCESS EXPERT ───────────────────────────────────────────────────────
+  { sec:'expert', role:'Process Expert', id:'pe1',  on:true,  name:'Module analysis',                        ratePerHr:120, minsPerUse:60  },
+  { sec:'expert', role:'Process Expert', id:'pe2',  on:true,  name:'RCA recommendation',                     ratePerHr:120, minsPerUse:90  },
+  { sec:'expert', role:'Process Expert', id:'pe3',  on:true,  name:'Expert recommendation',                  ratePerHr:120, minsPerUse:90  },
+  { sec:'expert', role:'Process Expert', id:'pe4',  on:true,  name:'Inspection time recommendation',         ratePerHr:120, minsPerUse:60  },
+  { sec:'expert', role:'Process Expert', id:'pe5',  on:true,  name:'Checklist report',                       ratePerHr:120, minsPerUse:45  },
+  { sec:'expert', role:'Process Expert', id:'pe6',  on:true,  name:'CIL report',                             ratePerHr:120, minsPerUse:45  },
+  { sec:'expert', role:'Process Expert', id:'pe7',  on:true,  name:'Centerline report',                      ratePerHr:120, minsPerUse:45  },
+  { sec:'expert', role:'Process Expert', id:'pe8',  on:true,  name:'Assessment report',                      ratePerHr:120, minsPerUse:60  },
+  { sec:'expert', role:'Process Expert', id:'pe9',  on:false, name:'Off spec prediction',                    ratePerHr:120, minsPerUse:120, tbc:true },
+  { sec:'expert', role:'Process Expert', id:'pe10', on:false, name:'RCA recommendations — causes & actions', ratePerHr:120, minsPerUse:120, tbc:true },
+  { sec:'expert', role:'Process Expert', id:'pe11', on:false, name:'RCA guide',                              ratePerHr:120, minsPerUse:60,  tbc:true },
+
+  // ── DATA ASSISTANT ───────────────────────────────────────────────────────
+  { sec:'assistant', role:'Data Analyst / Operator', id:'da1', on:true,  name:'KPI search',                ratePerHr:35, minsPerUse:10 },
+  { sec:'assistant', role:'Data Analyst / Operator', id:'da2', on:true,  name:'Register search',           ratePerHr:35, minsPerUse:10 },
+  { sec:'assistant', role:'Data Analyst / Operator', id:'da3', on:true,  name:'Chart creation',            ratePerHr:35, minsPerUse:20 },
+  { sec:'assistant', role:'Data Analyst / Operator', id:'da4', on:true,  name:'Database export',           ratePerHr:35, minsPerUse:20 },
+  { sec:'assistant', role:'Data Analyst / Operator', id:'da5', on:true,  name:'Duplicated register alert', ratePerHr:35, minsPerUse:15 },
+  { sec:'assistant', role:'Data Analyst / Operator', id:'da6', on:false, name:'External register search',  ratePerHr:35, minsPerUse:15 },
+  { sec:'assistant', role:'Data Analyst / Operator', id:'da7', on:false, name:'Keyword search',            ratePerHr:35, minsPerUse:10 },
+
+  // ── PERSONAL ASSISTANT ───────────────────────────────────────────────────
+  { sec:'assistant', role:'Administrator', id:'asa1', on:true, name:'Reminder', ratePerHr:35, minsPerUse:5 },
+
+  // ── CONFIGURATION ASSISTANT ──────────────────────────────────────────────
+  { sec:'assistant', role:'Configuration Engineer', id:'ca1', on:false, name:'Checklist upload',  ratePerHr:55, minsPerUse:30 },
+  { sec:'assistant', role:'Configuration Engineer', id:'ca2', on:false, name:'CIL upload',         ratePerHr:55, minsPerUse:30 },
+  { sec:'assistant', role:'Configuration Engineer', id:'ca3', on:false, name:'Centerline upload',  ratePerHr:55, minsPerUse:30 },
+  { sec:'assistant', role:'Configuration Engineer', id:'ca4', on:false, name:'Assessment upload',  ratePerHr:55, minsPerUse:30 },
+  { sec:'assistant', role:'Configuration Engineer', id:'ca5', on:false, name:'Masterdata upload',  ratePerHr:55, minsPerUse:45 },
+  { sec:'assistant', role:'Configuration Engineer', id:'ca6', on:false, name:'Board Designer',     ratePerHr:55, minsPerUse:60 },
+  { sec:'assistant', role:'Configuration Engineer', id:'ca7', on:false, name:'Workflow Designer',  ratePerHr:55, minsPerUse:60 },
+
+  // ── CONTENT CREATOR ──────────────────────────────────────────────────────
+  { sec:'content', role:'Content Creator', id:'cc1', on:true,  name:'Register creation',          ratePerHr:55, minsPerUse:60 },
+  { sec:'content', role:'Content Creator', id:'cc2', on:true,  name:'Communication creation',     ratePerHr:55, minsPerUse:45 },
+  { sec:'content', role:'Content Creator', id:'cc3', on:false, name:'Survey creation',            ratePerHr:55, minsPerUse:45 },
+  { sec:'content', role:'Content Creator', id:'cc4', on:false, name:'Quiz creation',              ratePerHr:55, minsPerUse:45 },
+  { sec:'content', role:'Content Creator', id:'cc5', on:false, name:'Checklist creation',         ratePerHr:55, minsPerUse:45 },
+  { sec:'content', role:'Content Creator', id:'cc6', on:false, name:'Training creation',          ratePerHr:55, minsPerUse:90 },
+  { sec:'content', role:'Content Creator', id:'cc7', on:false, name:'PowerPoint creation',        ratePerHr:55, minsPerUse:90 },
+  { sec:'content', role:'Content Creator', id:'cc8', on:false, name:'External register creation', ratePerHr:55, minsPerUse:60, tbc:true },
+
+  // ── CONTENT UPLOAD ───────────────────────────────────────────────────────
+  { sec:'content', role:'Content Manager', id:'cu1', on:false, name:'Obeya update', ratePerHr:55, minsPerUse:30 },
+
+  // ── SUPERVISOR ───────────────────────────────────────────────────────────
+  { sec:'supervisor', role:'Supervisor / Manager', id:'su1', on:true,  name:'Checklist, CIL & compliance monitoring', ratePerHr:75, minsPerUse:30 },
+  { sec:'supervisor', role:'Supervisor / Manager', id:'su2', on:true,  name:'Due date / aged registers',              ratePerHr:75, minsPerUse:20 },
+  { sec:'supervisor', role:'Supervisor / Manager', id:'su3', on:true,  name:'User participation & performance',       ratePerHr:75, minsPerUse:25 },
+  { sec:'supervisor', role:'Supervisor / Manager', id:'su4', on:false, name:'Coach guide',                            ratePerHr:75, minsPerUse:40, tbc:true },
+
+  // ── SOLVACE COACH ────────────────────────────────────────────────────────
+  { sec:'solvace', role:'Platform Trainer', id:'sc1', on:true, name:'Solvace FAQ', ratePerHr:50, minsPerUse:15 },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const state = {};
+LEVERS.forEach(l => {
+  state[l.id] = { on: l.on, stepIdx: DEFAULT_STEP_IDX, rate: l.ratePerHr, mins: l.minsPerUse };
+});
+
+// ── VALUE FORMULA ─────────────────────────────────────────────────────────────
+function calcValue(id) {
+  const s = state[id];
+  return STEPS[s.stepIdx] * (s.mins / 60) * s.rate;
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function refreshSlider(id) {
+  const sl = document.getElementById('sl-'+id);
+  if (sl) sl.value = state[id].stepIdx;
+  refreshTicks(id);
+  refreshPerUse(id);
+}
+function refreshTicks(id) {
+  document.querySelectorAll('#ticks-'+id+' .uses-tick').forEach((t,i) => t.classList.toggle('active', i===state[id].stepIdx));
+  const ve = document.getElementById('useval-'+id);
+  if (ve) { const u=STEPS[state[id].stepIdx]; ve.textContent = u>=1000?(u/1000)+'k uses/yr':u+' uses/yr'; }
+}
+function refreshPerUse(id) {
+  const el = document.getElementById('peruse-'+id);
+  if (el) el.textContent = fmt(Math.round(state[id].mins/60*state[id].rate*100)/100);
+}
+
+// ── CHART ─────────────────────────────────────────────────────────────────────
+let donutChart = null;
+const SEC_COLORS = { analyst:'#1a1aff', expert:'#001391', assistant:'#5555ff', content:'#0044cc', supervisor:'#3388ff', solvace:'#88aaff' };
+
+function updateChart() {
+  const secTots = {};
+  SECS.forEach(s => secTots[s.id] = 0);
+  LEVERS.forEach(l => { if (state[l.id].on) secTots[l.sec] = (secTots[l.sec]||0) + calcValue(l.id); });
+  const data = SECS.map(s => Math.max(0, Math.round(secTots[s.id])));
+  const colors = SECS.map(s => SEC_COLORS[s.id]);
+  const labels = SECS.map(s => s.label);
+  if (!donutChart) {
+    donutChart = new Chart(document.getElementById('donut'), {
+      type:'doughnut',
+      data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:2, borderColor:'#fff', hoverBorderColor:'#fff' }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'66%',
+        plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmtFull(ctx.parsed)}} }
+      }
+    });
+  } else { donutChart.data.datasets[0].data = data; donutChart.update('none'); }
+  const total = data.reduce((a,b)=>a+b,0);
+  document.getElementById('legend').innerHTML = SECS.map((s,i) => data[i]>0 ? `
+    <div class="lrow">
+      <div class="ldot" style="background:${colors[i]}"></div>
+      <span style="flex:1;font-size:11px;color:var(--text2);">${s.label}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--electric-blue);font-weight:600;">${fmt(data[i])}</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:6px;">${total>0?Math.round(data[i]/total*100):0}%</span>
+    </div>` : '').join('');
+}
+
+// ── RECALC ────────────────────────────────────────────────────────────────────
+function recalc() {
+  let grand = 0;
+  const tots = {};
+  SECS.forEach(s => tots[s.id] = 0);
+  LEVERS.forEach(l => {
+    const val = calcValue(l.id);
+    const sav = state[l.id].on ? val : 0;
+    tots[l.sec] = (tots[l.sec]||0) + sav;
+    grand += sav;
+    const el = document.getElementById('sv-'+l.id);
+    if (el) { el.textContent = fmt(val); el.className = 'lval '+(state[l.id].on?'on':'off'); }
+    const row = document.getElementById('row-'+l.id);
+    if (row) row.className = 'lever-item '+(state[l.id].on?'':'off');
+  });
+  SECS.forEach(s => { const el = document.getElementById('tot-'+s.id); if(el) el.textContent = fmt(tots[s.id]); });
+  document.getElementById('big-tot').textContent = fmtFull(grand);
+  updateChart();
+}
+
+// ── BUILD UI ──────────────────────────────────────────────────────────────────
+// Groups levers within a section by role so $/hr appears once per role group
+function buildUI() {
+  const container = document.getElementById('panels-container');
+  SECS.forEach((sec, si) => {
+    const secLevers = LEVERS.filter(l => l.sec === sec.id);
+
+    // Build ordered list of unique roles preserving first-occurrence order
+    const roleOrder = [];
+    secLevers.forEach(l => { if (!roleOrder.includes(l.role)) roleOrder.push(l.role); });
+
+    // Group levers by role
+    const byRole = {};
+    secLevers.forEach(l => { (byRole[l.role] = byRole[l.role]||[]).push(l); });
+
+    let skillRows = '';
+    roleOrder.forEach(role => {
+      const group = byRole[role];
+      const firstLever = group[0];
+      // Unique group key: sec + role slug
+      const groupKey = sec.id + '_' + role.replace(/[^a-zA-Z0-9]/g,'_');
+
+      // Role group header with shared $/hr input
+      skillRows += `
+      <div class="role-group-header" id="rgh-${groupKey}">
+        <span class="role-group-name">Human equivalent: ${role}</span>
+        <div class="param-chip" style="margin-left:auto;">
+          <span>$/hr</span>
+          <input class="param-input" type="number" min="1" max="9999"
+            value="${firstLever.ratePerHr}" id="grouprate-${groupKey}"
+            oninput="onGroupRate('${groupKey}','${sec.id}','${role.replace(/'/g,"\\'")}',this.value)">
+        </div>
+      </div>`;
+
+      // Individual lever rows — no $/hr chip, only min/use
+      group.forEach(l => {
+        const perUse = fmt(Math.round(l.minsPerUse/60*l.ratePerHr*100)/100);
+        const initU = STEPS[DEFAULT_STEP_IDX];
+        const initLabel = initU>=1000?(initU/1000)+'k uses/yr':initU+' uses/yr';
+        skillRows += `
+      <div class="lever-item ${l.on?'':'off'}" id="row-${l.id}">
+        <div class="lever-main">
+          <div style="min-width:0;flex:1;">
+            <div class="lname">${l.name}${l.tbc?'<span class="tbc-tag">TBC</span>':''}</div>
+            <div class="lever-controls">
+              <div class="uses-row">
+                <span class="uses-row-label">Uses / year</span>
+                <div class="uses-slider-wrap">
+                  <input class="uses-slider" type="range" min="0" max="${STEPS.length-1}" step="1"
+                    value="${DEFAULT_STEP_IDX}" id="sl-${l.id}" oninput="onSlider('${l.id}',this.value)">
+                  <div class="uses-ticks" id="ticks-${l.id}">
+                    ${STEP_LABELS.map((lb,i)=>`<span class="uses-tick${i===DEFAULT_STEP_IDX?' active':''}">${lb}</span>`).join('')}
+                  </div>
+                </div>
+                <span class="uses-val" id="useval-${l.id}">${initLabel}</span>
+              </div>
+              <div class="params-row">
+                <div class="param-chip">
+                  <span>min/use</span>
+                  <input class="param-input" type="number" min="1" max="999"
+                    value="${l.minsPerUse}" id="mins-${l.id}" oninput="onMins('${l.id}',this.value)">
+                </div>
+                <span class="param-eq">= <span class="param-result" id="peruse-${l.id}">${perUse}</span> / use</span>
+              </div>
+            </div>
+          </div>
+          <div class="lright">
+            <label class="tog">
+              <input type="checkbox" ${l.on?'checked':''} onchange="togLev('${l.id}',this.checked)">
+              <div class="tog-t"></div><div class="tog-k"></div>
+            </label>
+            <div class="lval ${l.on?'on':'off'}" id="sv-${l.id}">$0</div>
+          </div>
+        </div>
+      </div>`;
+      });
+    });
+
+    const isFirst = si === 0;
+    container.innerHTML += `
+    <div class="panel">
+      <div class="panel-head" onclick="togPanel('${sec.id}')">
+        <div class="panel-head-left">
+          <div class="panel-icon" style="background:${SEC_COLORS[sec.id]}18;color:${SEC_COLORS[sec.id]};">${sec.icon}</div>
+          <div><div class="panel-title">${sec.label}</div><div class="panel-sub">${sec.sub}</div></div>
+        </div>
+        <div class="panel-right">
+          <div class="panel-total" id="tot-${sec.id}">$0</div>
+          <span class="chev ${isFirst?'open':''}" id="chev-${sec.id}">▼</span>
+        </div>
+      </div>
+      <div class="panel-body ${isFirst?'open':''}" id="body-${sec.id}">
+        ${skillRows}
+      </div>
+    </div>`;
+  });
+}
+
+// ── INTERACTIONS ──────────────────────────────────────────────────────────────
+function togPanel(id) {
+  document.getElementById('body-'+id).classList.toggle('open');
+  document.getElementById('chev-'+id).classList.toggle('open');
+}
+function togLev(id, val) { state[id].on = val; recalc(); }
+function onSlider(id, val) { state[id].stepIdx = parseInt(val); refreshTicks(id); recalc(); }
+
+// Shared $/hr for a whole role group within a section
+function onGroupRate(groupKey, secId, role, val) {
+  const v = parseFloat(val);
+  if (isNaN(v) || v <= 0) return;
+  LEVERS.forEach(l => {
+    if (l.sec === secId && l.role === role) {
+      state[l.id].rate = v;
+      refreshPerUse(l.id);
+    }
+  });
+  recalc();
+}
+
+function onMins(id, val) { const v=parseFloat(val); if(!isNaN(v)&&v>0){state[id].mins=v;refreshPerUse(id);recalc();} }
+
+function enableAll() {
+  LEVERS.forEach(l => {
+    state[l.id].on = true;
+    const cb = document.querySelector('#row-'+l.id+' input[type=checkbox]');
+    if (cb) cb.checked = true;
+  });
+  recalc();
+}
+function resetAll() {
+  LEVERS.forEach(l => {
+    state[l.id] = { on: l.on, stepIdx: DEFAULT_STEP_IDX, rate: l.ratePerHr, mins: l.minsPerUse };
+    const cb = document.querySelector('#row-'+l.id+' input[type=checkbox]');
+    if (cb) cb.checked = l.on;
+    const mi = document.getElementById('mins-'+l.id);
+    if (mi) mi.value = l.minsPerUse;
+    refreshSlider(l.id);
+  });
+  // Reset group rate inputs
+  SECS.forEach(sec => {
+    const secLevers = LEVERS.filter(l => l.sec === sec.id);
+    const roleOrder = [];
+    secLevers.forEach(l => { if (!roleOrder.includes(l.role)) roleOrder.push(l.role); });
+    roleOrder.forEach(role => {
+      const firstLever = LEVERS.find(l => l.sec === sec.id && l.role === role);
+      if (!firstLever) return;
+      const groupKey = sec.id + '_' + role.replace(/[^a-zA-Z0-9]/g,'_');
+      const ri = document.getElementById('grouprate-'+groupKey);
+      if (ri) ri.value = firstLever.ratePerHr;
+    });
+  });
+  recalc();
+}
+
+buildUI();
+recalc();
+</script>
+
+<!-- ══ REVIEW PANEL ══ -->
+<button id="rp-fab" onclick="togglePanel()" title="Review panel">💬</button>
+<div id="review-panel">
+  <div id="rp-header">
+    <div id="rp-title"><span id="rp-dot"></span>Review — AI Savings</div>
+    <button id="rp-collapse" onclick="togglePanel()">◀</button>
+  </div>
+  <div id="rp-body">
+    <input id="rp-name-inp" type="text" placeholder="Your name (reviewer)" maxlength="40" autocomplete="name">
+    <button id="rp-toggle-btn" onclick="toggleCommentMode()">💬 Enable comment mode</button>
+    <div class="rp-row">
+      <button class="rp-btn" onclick="toggleList()">📋 List (<span id="rp-count">0</span>)</button>
+      <button class="rp-btn" onclick="exportComments()">⬇ Export</button>
+    </div>
+    <button class="rp-btn" style="width:100%" onclick="toggleMarkersVisible()">👁 Hide comments</button>
+    <div id="rp-list" style="display:none;"></div>
+    <div id="rp-backend-tag">backend: Firebase (real-time)</div>
+  </div>
+</div>
+<div id="cm-popup">
+  <h4>💬 Add a comment</h4>
+  <textarea id="cm-text-inp" placeholder="Write your comment…" maxlength="500"></textarea>
+  <div class="cm-popup-btns">
+    <button onclick="cancelComment()">Cancel</button>
+    <button class="pri" onclick="submitComment()">Post</button>
+  </div>
+</div>
+<div id="comment-hint">Click anywhere to comment · Esc to cancel</div>
+<div id="markers-layer" style="position:absolute;top:0;left:0;width:100%;pointer-events:none;"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBd6YbOEZgFkmGABuMz7LnfI33XNALSQ9c",
+  authDomain: "solvace-reviews.firebaseapp.com",
+  projectId: "solvace-reviews",
+  storageBucket: "solvace-reviews.firebasestorage.app",
+  messagingSenderId: "197430755300",
+  appId: "1:197430755300:web:c3c2f3d2e83b838215d1f1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const COLL = "kai_comments"; // separate collection per tool
+
+let commentMode=false, panelCollapsed=false, listVisible=false, markersVisible=true;
+let pendingX=0, pendingY=0, allComments=[];
+
+const q = query(collection(db, COLL), orderBy("ts","asc"));
+onSnapshot(q, snap => {
+  allComments = snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderMarkers(); renderList(); updateCount();
+  document.getElementById("rp-dot").classList.add("live");
+});
+
+function renderMarkers(){
+  const layer=document.getElementById("markers-layer");
+  if(!markersVisible){layer.innerHTML="";return;}
+  layer.innerHTML="";
+  allComments.forEach((c,i)=>{
+    const el=document.createElement("div");
+    el.className="cm-marker"; el.style.left=c.x+"px"; el.style.top=c.y+"px";
+    el.style.pointerEvents="all"; el.textContent=i+1;
+    el.title=`${c.author}: ${c.text}`;
+    el.onclick=()=>scrollToComment(c.id);
+    layer.appendChild(el);
+  });
+  resizeLayer();
+}
+
+function resizeLayer(){
+  const layer=document.getElementById("markers-layer");
+  layer.style.height=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight)+"px";
+}
+window.addEventListener("resize",resizeLayer);
+setTimeout(resizeLayer,800);
+
+function renderList(){
+  const el=document.getElementById("rp-list");
+  if(!allComments.length){el.innerHTML='<div id="rp-empty">No comments yet.</div>';return;}
+  el.innerHTML=allComments.map((c,i)=>`
+    <div class="rp-note-item" id="li-${c.id}" onclick="highlightMarker(${i})">
+      <button class="rp-note-del" onclick="event.stopPropagation();deleteComment('${c.id}')">✕</button>
+      <div class="rp-note-author">${escH(c.author||"Anonymous")}</div>
+      <div class="rp-note-text">${escH(c.text)}</div>
+      <div class="rp-note-date">${c.dateStr||""}</div>
+    </div>`).join("");
+}
+
+function updateCount(){document.getElementById("rp-count").textContent=allComments.length;}
+function escH(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+window.toggleCommentMode=function(){
+  commentMode=!commentMode;
+  document.body.classList.toggle("comment-mode",commentMode);
+  const btn=document.getElementById("rp-toggle-btn");
+  btn.classList.toggle("active",commentMode);
+  btn.textContent=commentMode?"🛑 Disable comment mode":"💬 Enable comment mode";
+  document.getElementById("comment-hint").classList.toggle("show",commentMode);
+};
+
+document.addEventListener("click",e=>{
+  if(!commentMode)return;
+  if(e.target.closest("#review-panel")||e.target.closest("#cm-popup")||e.target.closest(".cm-marker")||e.target.closest("#rp-fab"))return;
+  pendingX=e.pageX-12; pendingY=e.pageY-12;
+  const p=document.getElementById("cm-popup");
+  p.style.display="block";
+  let px=e.clientX+12,py=e.clientY+12;
+  if(px+290>window.innerWidth)px=e.clientX-292;
+  if(py+180>window.innerHeight)py=e.clientY-160;
+  p.style.left=px+"px"; p.style.top=py+"px";
+  document.getElementById("cm-text-inp").value="";
+  setTimeout(()=>document.getElementById("cm-text-inp").focus(),50);
+});
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){cancelComment();if(commentMode)toggleCommentMode();}
+  if((e.ctrlKey||e.metaKey)&&e.key==="Enter"&&document.getElementById("cm-popup").style.display==="block")submitComment();
+});
+
+window.cancelComment=function(){document.getElementById("cm-popup").style.display="none";};
+
+window.submitComment=async function(){
+  const text=document.getElementById("cm-text-inp").value.trim();
+  if(!text)return;
+  const author=document.getElementById("rp-name-inp").value.trim()||"Anonymous";
+  localStorage.setItem("solvace_reviewer_name",author);
+  const now=new Date();
+  const dateStr=now.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})+" · "+
+                now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  await addDoc(collection(db,COLL),{x:pendingX,y:pendingY,author,text,dateStr,ts:serverTimestamp()});
+  cancelComment(); if(commentMode)toggleCommentMode();
+};
+
+window.deleteComment=async function(id){await deleteDoc(doc(db,COLL,id));};
+
+window.togglePanel=function(){
+  panelCollapsed=!panelCollapsed;
+  document.getElementById("review-panel").classList.toggle("collapsed",panelCollapsed);
+  document.getElementById("rp-collapse").textContent=panelCollapsed?"▶":"◀";
+  document.getElementById("rp-fab").classList.toggle("hidden",!panelCollapsed);
+};
+
+window.toggleList=function(){
+  listVisible=!listVisible;
+  const el=document.getElementById("rp-list");
+  el.style.display=listVisible?"flex":"none";
+  if(listVisible)el.style.flexDirection="column";
+};
+
+window.toggleMarkersVisible=function(){
+  markersVisible=!markersVisible;
+  document.querySelector(".rp-btn[onclick='toggleMarkersVisible()']").textContent=
+    markersVisible?"👁 Hide comments":"👁 Show comments";
+  renderMarkers();
+};
+
+window.exportComments=function(){
+  const rows=[["#","Author","Comment","Date","X","Y"]];
+  allComments.forEach((c,i)=>rows.push([i+1,c.author||"",c.text||"",c.dateStr||"",c.x,c.y]));
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="kai_comments.csv"; a.click();
+};
+
+window.scrollToComment=function(id){
+  if(!listVisible)toggleList();
+  document.getElementById("li-"+id)?.scrollIntoView({behavior:"smooth",block:"nearest"});
+};
+
+window.highlightMarker=function(i){
+  document.querySelectorAll(".cm-marker")[i]?.scrollIntoView({behavior:"smooth",block:"center"});
+};
+
+const saved=localStorage.getItem("solvace_reviewer_name");
+if(saved)document.getElementById("rp-name-inp").value=saved;
+document.getElementById("rp-fab").classList.add("hidden");
+</script>
+</body>
+</html>
