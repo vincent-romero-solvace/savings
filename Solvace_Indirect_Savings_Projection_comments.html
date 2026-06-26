@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvace Indirect Savings Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --blue:#1a1aff;--dblue:#001391;--bg:#f5f5f7;--bg2:#fff;--bg3:#ededf2;--bg4:#dcdce8;
+  --border:rgba(26,26,255,0.10);--border2:rgba(26,26,255,0.18);
+  --text:#0a0a1a;--t2:#4a4a6a;--t3:#8a8aaa;
+  --ib:rgba(26,26,255,0.05);--ibr:rgba(26,26,255,0.20);--it:#1a1aff;--itb:#2a2a6e;
+  --green:#00880088;--green-bg:rgba(0,136,0,0.05);
+  --mono:'Inter',monospace;--serif:'Space Grotesk',sans-serif;--sans:'Inter',sans-serif;
+  --r:10px;--r2:14px;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh;
+  background-image:radial-gradient(ellipse at 10% 0%,rgba(26,26,255,0.04) 0%,transparent 50%);}
+
+/* ── REVIEW PANEL ── */
+body.comment-mode{cursor:crosshair!important;}
+body.comment-mode *{cursor:crosshair!important;}
+#review-panel{position:fixed;top:70px;right:0;width:260px;background:#1a1a2e;color:#fff;border-radius:12px 0 0 12px;z-index:9000;box-shadow:-4px 0 24px rgba(0,0,0,0.2);font-family:var(--sans);overflow:hidden;transition:transform .25s;}
+#review-panel.collapsed{transform:translateX(260px);}
+#rp-fab{position:fixed;top:70px;right:12px;width:40px;height:40px;border-radius:50%;background:#1a1a2e;color:#fff;border:none;font-size:18px;cursor:pointer;z-index:8999;box-shadow:0 4px 14px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;transition:background .15s;}
+#rp-fab:hover{background:#2a2a4e;}
+#rp-fab.hidden{display:none;}
+#rp-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#12122a;border-bottom:1px solid rgba(255,255,255,0.08);}
+#rp-title{font-family:var(--serif);font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;}
+#rp-dot{width:8px;height:8px;border-radius:50%;background:#cc2200;flex-shrink:0;}
+#rp-dot.live{background:#00cc66;animation:rp-pulse 1.5s infinite;}
+@keyframes rp-pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+#rp-collapse{background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:14px;padding:0;line-height:1;}
+#rp-collapse:hover{color:#fff;}
+#rp-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
+#rp-name-inp{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:7px;color:#fff;font-family:var(--mono);font-size:11px;padding:6px 9px;outline:none;}
+#rp-name-inp:focus{border-color:rgba(100,100,255,0.6);}
+#rp-name-inp::placeholder{color:rgba(255,255,255,0.3);}
+#rp-toggle-btn{width:100%;padding:7px;border-radius:7px;border:none;background:rgba(255,255,255,0.10);color:#fff;font-family:var(--mono);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s;}
+#rp-toggle-btn:hover{background:rgba(255,255,255,0.18);}
+#rp-toggle-btn.active{background:rgba(26,26,255,0.5);border:1px solid rgba(100,100,255,0.5);}
+.rp-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.rp-btn{padding:6px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.8);font-family:var(--mono);font-size:10px;cursor:pointer;text-align:center;transition:background .15s;}
+.rp-btn:hover{background:rgba(255,255,255,0.14);color:#fff;}
+#rp-list{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-top:2px;}
+#rp-list::-webkit-scrollbar{width:3px;}
+#rp-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:2px;}
+.rp-note-item{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background .12s;}
+.rp-note-item:hover{background:rgba(255,255,255,0.12);}
+.rp-note-author{font-family:var(--mono);font-size:9px;color:rgba(100,180,255,0.9);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;}
+.rp-note-text{font-size:11px;color:rgba(255,255,255,0.85);margin-top:2px;line-height:1.4;word-break:break-word;}
+.rp-note-date{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,0.3);margin-top:4px;}
+.rp-note-del{float:right;background:none;border:none;color:rgba(255,100,100,0.5);cursor:pointer;font-size:11px;padding:0;line-height:1;}
+.rp-note-del:hover{color:#ff6666;}
+#rp-empty{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);text-align:center;padding:12px 0;}
+#rp-backend-tag{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,0.25);text-align:center;padding:6px 0 2px;}
+#comment-hint{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1aff;color:#fff;font-family:var(--mono);font-size:11px;padding:6px 18px;border-radius:20px;z-index:9100;pointer-events:none;box-shadow:0 4px 16px rgba(26,26,255,0.35);opacity:0;transition:opacity .2s;}
+#comment-hint.show{opacity:1;}
+.cm-marker{position:absolute;z-index:8000;width:24px;height:24px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--mono);transition:transform .15s;}
+.cm-marker:hover{transform:scale(1.2);}
+#cm-popup{position:fixed;z-index:9500;background:#fff;border:1px solid var(--border2);border-radius:12px;padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);width:280px;display:none;}
+#cm-popup h4{font-family:var(--serif);font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text);}
+#cm-text-inp{width:100%;height:72px;resize:none;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;font-family:var(--sans);font-size:12px;padding:6px 8px;outline:none;color:var(--text);margin-bottom:10px;}
+#cm-text-inp:focus{border-color:rgba(26,26,255,0.5);}
+.cm-popup-btns{display:flex;gap:6px;justify-content:flex-end;}
+.cm-popup-btns button{font-size:11px;padding:5px 12px;border-radius:7px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--t2);}
+.cm-popup-btns button.pri{background:rgba(26,26,255,0.10);border-color:rgba(26,26,255,0.25);color:var(--blue);font-weight:600;}
+.cm-popup-btns button.pri:hover{background:var(--blue);color:#fff;}
+
+/* NAV */
+.nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(26,26,255,0.12);padding:10px 0;position:sticky;top:0;z-index:100;}
+.nav-in{max-width:1140px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;}
+.nav-tag{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:0.08em;text-transform:uppercase;}
+.page{max-width:1140px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+
+/* HERO */
+.hero{margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(26,26,255,0.06);border:1px solid rgba(26,26,255,0.20);border-radius:20px;font-family:var(--mono);font-size:10px;color:var(--blue);letter-spacing:0.10em;margin-bottom:10px;text-transform:uppercase;}
+.hero-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-family:var(--serif);font-size:26px;font-weight:600;line-height:1.25;margin-bottom:4px;}
+.hero h1 em{font-style:italic;color:var(--blue);}
+.hero p{font-size:13px;color:var(--t2);max-width:480px;line-height:1.6;}
+.hero-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;max-width:400px;}
+.hi{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 13px;}
+.hi-lbl{font-size:10px;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;}
+.hi-row{display:flex;align-items:center;gap:5px;}
+.hi-u{font-size:12px;color:var(--t3);font-family:var(--mono);}
+.hi-row input,.hi-row select{flex:1;min-width:0;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:14px;font-weight:500;outline:none;padding:0;}
+.hi-row select{cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a9990'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 2px center;padding-right:16px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* SUMMARY CARD */
+.sum-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:22px 24px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;gap:0;align-items:stretch;margin-bottom:18px;animation:fadeUp .22s ease both;}
+.sc-left{flex:0 0 230px;padding-right:24px;display:flex;flex-direction:column;justify-content:space-between;}
+.sc-div{width:1px;background:var(--border);flex-shrink:0;}
+.sc-right{flex:1;padding-left:24px;}
+.sc-ey{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:0.10em;text-transform:uppercase;margin-bottom:8px;}
+.sc-num{font-family:var(--serif);font-size:32px;font-weight:700;color:var(--blue);line-height:1;letter-spacing:-0.02em;margin-bottom:2px;white-space:nowrap;}
+.sc-lbl{font-size:12px;color:var(--t2);margin-bottom:16px;}
+.sc-btns{display:flex;gap:8px;}
+.btn{flex:1;padding:8px 12px;border-radius:var(--r);font-family:var(--sans);font-size:12px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--t2);transition:all .15s;text-align:center;}
+.btn:hover{background:var(--bg3);color:var(--text);}
+.btn.pri{background:rgba(26,26,255,0.08);border-color:rgba(26,26,255,0.25);color:var(--blue);font-weight:500;}
+.btn.pri:hover{background:rgba(26,26,255,0.14);}
+.chart-ttl{font-size:10px;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
+.lrow{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.ldot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+
+/* SECTION CARDS */
+.sec-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:16px;animation:fadeUp .25s ease both;}
+.sec-head{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-bottom:1px solid var(--border);}
+.sec-head-left{display:flex;align-items:center;gap:10px;}
+.sec-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.sec-name{font-family:var(--serif);font-size:14px;font-weight:600;}
+.sec-desc{font-size:11px;color:var(--t3);font-family:var(--mono);}
+.sec-head-right{display:flex;align-items:center;gap:12px;}
+.sec-pill{font-family:var(--mono);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:0.09em;padding:3px 9px;border:1px solid var(--border2);border-radius:20px;}
+.sec-total{font-family:var(--mono);font-size:13px;color:var(--blue);font-weight:600;min-width:60px;text-align:right;}
+
+/* ── OEE COMPARISON LAYOUT ── */
+.oee-compare{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+.oee-col{min-width:0;width:100%;overflow:hidden;}
+.oee-col.before{border-right:1px solid var(--border);}
+.oee-col-head{padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.oee-col-label{font-size:10px;font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.09em;color:var(--t3);}
+.oee-col.after .oee-col-head{background:rgba(26,26,255,0.04);}
+.oee-col.after .oee-col-label{color:var(--blue);}
+
+/* Mini result bars inside each column — 2×2 grid to fit half-width */
+.mini-bar{display:grid;grid-template-columns:repeat(2,1fr);border-bottom:1px solid var(--border);width:100%;}
+.mm{padding:10px 14px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-width:0;}
+.mm:nth-child(2n){border-right:none;}
+.mm:nth-child(3),.mm:nth-child(4){border-bottom:none;}
+.mm.acc{background:rgba(26,26,255,0.03);}
+.mm-lbl{font-size:9px;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.mm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.mm-val{font-family:var(--serif);font-size:22px;font-weight:700;line-height:1;color:var(--blue);}
+.mm.acc .mm-val{font-size:28px;color:var(--dblue);}
+.mm-sub{font-size:9px;color:var(--t3);margin-top:2px;font-family:var(--mono);line-height:1.3;word-break:break-word;}
+.gauge{height:2px;background:var(--bg4);border-radius:2px;margin-top:6px;overflow:hidden;}
+.gauge-f{height:100%;border-radius:2px;transition:width .5s ease;}
+
+/* Sub-panel inputs inside each column: 3 cols */
+.sp-grid{display:grid;grid-template-columns:repeat(3,1fr);width:100%;}
+.sp{border-right:1px solid var(--border);min-width:0;overflow:hidden;}
+.sp:last-child{border-right:none;}
+.sp-head{padding:8px 10px 7px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sp-head-left{display:flex;align-items:center;gap:5px;}
+.sp-icon{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;}
+.sp-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sp-body{padding:9px 10px;display:flex;flex-direction:column;gap:7px;}
+.field-lbl{font-size:10px;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;}
+.field-row{display:flex;align-items:center;gap:5px;}
+.field-row input{flex:1;min-width:0;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:4px 7px;outline:none;transition:border-color .15s;}
+.field-row input:focus{border-color:rgba(26,26,255,0.55);}
+.field-unit{font-size:10px;color:var(--t3);font-family:var(--mono);white-space:nowrap;}
+.derived{padding:5px 8px;background:rgba(26,26,255,0.04);border:1px solid rgba(26,26,255,0.10);border-radius:6px;font-size:10px;color:var(--t2);font-family:var(--mono);line-height:1.5;}
+.derived span{color:var(--blue);font-weight:600;}
+
+/* ⓘ info icon + tooltip */
+.info-wrap{position:relative;display:inline-flex;align-items:center;}
+.info-icon{width:18px;height:18px;border-radius:50%;border:1px solid var(--ibr);background:var(--ib);color:var(--it);font-size:10px;font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;flex-shrink:0;transition:background .15s;}
+.info-icon:hover{background:rgba(26,26,255,0.12);}
+.info-tip{display:none;position:absolute;width:260px;background:var(--bg2);border:1px solid var(--ibr);border-radius:10px;box-shadow:0 4px 20px rgba(26,26,255,0.14);z-index:200;padding:0;overflow:hidden;}
+.info-tip.open{display:block;animation:fadeUp .15s ease both;}
+.info-tip-hd{padding:7px 11px 6px;border-bottom:1px solid var(--ibr);font-size:10px;font-family:var(--mono);color:var(--it);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;}
+.info-tip-body{padding:8px 11px 10px;display:flex;flex-direction:column;gap:6px;}
+.info-f{display:flex;gap:6px;align-items:flex-start;}
+.info-fd{width:4px;height:4px;border-radius:50%;background:var(--it);margin-top:6px;flex-shrink:0;}
+.info-ft{font-size:11px;color:var(--itb);line-height:1.5;}
+.info-ft strong{color:var(--it);font-weight:500;}
+
+/* Revenue lever strip */
+.rev-strip{padding:14px 20px;background:rgba(26,26,255,0.015);border-top:1px solid var(--border);}
+.rev-grid{display:grid;grid-template-columns:1fr auto auto auto;gap:16px;align-items:center;}
+.rev-label{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.rev-sub{font-size:10px;color:var(--t3);font-family:var(--mono);}
+.rev-derived{padding:6px 10px;background:rgba(26,26,255,0.04);border:1px solid rgba(26,26,255,0.10);border-radius:7px;font-size:11px;color:var(--t2);font-family:var(--mono);line-height:1.6;white-space:nowrap;}
+.rev-derived span{color:var(--blue);font-weight:600;}
+.rev-controls{display:flex;flex-direction:column;gap:5px;min-width:200px;}
+.lv-row{display:flex;align-items:center;gap:8px;}
+.lv-row input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:3px;background:var(--bg4);border-radius:2px;outline:none;cursor:pointer;}
+.lv-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(26,26,255,0.35);transition:transform .1s;}
+.lv-row input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15);}
+.lv-pct{font-family:var(--mono);font-size:11px;color:var(--t2);min-width:42px;text-align:right;}
+.lv-bot{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.why-btn{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;border:1px solid var(--ibr);background:var(--ib);color:var(--it);font-size:10px;font-family:var(--mono);cursor:pointer;user-select:none;transition:background .1s;}
+.why-btn:hover{background:rgba(0,200,255,0.10);}
+.tog{position:relative;width:34px;height:19px;flex-shrink:0;}
+.tog input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;margin:0;z-index:1;}
+.tog-t{position:absolute;inset:0;background:var(--bg4);border:1px solid var(--border2);border-radius:10px;transition:background .15s,border-color .15s;pointer-events:none;}
+.tog-k{position:absolute;top:3px;left:3px;width:13px;height:13px;background:var(--t3);border-radius:50%;transition:transform .15s,background .15s;pointer-events:none;}
+.tog input:checked~.tog-t{background:rgba(26,26,255,0.12);border-color:var(--blue);}
+.tog input:checked~.tog-k{transform:translateX(15px);background:var(--blue);box-shadow:0 1px 4px rgba(26,26,255,0.4);}
+.why-panel{display:none;margin-top:8px;border-radius:8px;border:1px solid var(--ibr);background:var(--ib);overflow:hidden;}
+.why-panel.open{display:block;animation:fadeUp .18s ease both;}
+.why-hd{padding:7px 11px 6px;border-bottom:1px solid var(--ibr);font-size:10px;font-family:var(--mono);color:var(--it);text-transform:uppercase;letter-spacing:0.08em;font-weight:500;}
+.why-feats{padding:8px 11px 9px;display:flex;flex-direction:column;gap:5px;}
+.why-f{display:flex;gap:6px;align-items:flex-start;}
+.why-fd{width:4px;height:4px;border-radius:50%;background:var(--it);margin-top:6px;flex-shrink:0;}
+.why-ft{font-size:11px;color:var(--itb);line-height:1.5;}
+.why-ft strong{color:var(--it);font-weight:500;}
+.rev-saving{text-align:right;}
+.rev-saving-num{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--blue);line-height:1;}
+.rev-saving-num.off{color:var(--t3);}
+.rev-saving-lbl{font-size:10px;color:var(--t3);font-family:var(--mono);margin-top:2px;}
+.note-strip{font-size:10px;color:var(--t3);line-height:1.5;padding:7px 18px;background:var(--bg3);border-top:1px solid var(--border);font-family:var(--mono);}
+.note-strip strong{color:var(--t2);}
+
+/* COSTS SECTION */
+.cost-grid{display:grid;grid-template-columns:repeat(4,1fr);}
+.csp{border-right:1px solid var(--border);}
+.csp:last-child{border-right:none;}
+.csp-head{padding:10px 14px 9px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;}
+.csp-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.csp-name{font-size:12px;font-weight:600;}
+.csp-desc{font-size:10px;color:var(--t3);font-family:var(--mono);}
+.csp-body{padding:11px 14px;display:flex;flex-direction:column;gap:8px;}
+.csp-lever{padding-top:9px;border-top:1px solid var(--border);}
+.lv-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.lv-name{font-size:11px;font-weight:500;color:var(--text);}
+.lv-val{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--blue);}
+.lv-val.off{color:var(--t3);}
+.lv-bot2{display:flex;align-items:center;justify-content:space-between;}
+.field-sym{font-size:12px;color:var(--t3);font-family:var(--mono);white-space:nowrap;}
+
+/* Cost result bar */
+.cost-result-bar{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border);}
+.crm{padding:12px 14px;border-right:1px solid var(--border);}
+.crm:last-child{border-right:none;}
+.crm-lbl{font-size:9px;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.crm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.crm-val{font-family:var(--serif);font-size:20px;font-weight:700;line-height:1;color:var(--blue);}
+.crm-sub{font-size:9px;color:var(--t3);margin-top:2px;font-family:var(--mono);}
+
+/* Disabled lever */
+.csp.lev-off .lv-name{color:var(--t3);}
+.csp.lev-off .lv-row{opacity:0.35;pointer-events:none;}
+.csp.lev-off .why-btn{opacity:0.4;pointer-events:none;}
+
+@media(max-width:900px){
+  .sum-card{flex-direction:column;}
+  .sc-left{flex:none;padding-right:0;padding-bottom:16px;}
+  .sc-div{width:100%;height:1px;}
+  .sc-right{padding-left:0;padding-top:16px;}
+  .oee-compare{grid-template-columns:1fr;}
+  .oee-col.before{border-right:none;border-bottom:1px solid var(--border);}
+  .mini-bar{grid-template-columns:1fr 1fr;}
+  .sp-grid{grid-template-columns:1fr 1fr;}
+  .cost-grid{grid-template-columns:1fr 1fr;}
+  .cost-result-bar{grid-template-columns:1fr 1fr;}
+  .sp,.csp{border-right:none;border-bottom:1px solid var(--border);}
+  .sp:last-child,.csp:last-child{border-bottom:none;}
+  .rev-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:560px){
+  .hero-inputs{grid-template-columns:1fr;}
+  .sp-grid{grid-template-columns:1fr;}
+  .cost-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <svg height="26" viewBox="0 0 283.4645669 46.2199992" xmlns="http://www.w3.org/2000/svg">
+      <defs><style>.s0{fill:#1a1aff}</style></defs>
+      <path d="M103.3714148,22.9088652c-2.0260224-.9396078-4.3119993-1.680659-6.8589723-2.2238663l-3.2575993-.8141257c-1.9212073-.4590592-3.5699065-.9915219-4.9481806-1.5973332-1.3783289-.6050438-2.4431995-1.388032-3.1947212-2.3491291-.7515218-.9601103-1.1278034-2.2129024-1.1278034-3.7583763,0-2.3381103.8772779-4.1440321,2.6307921-5.4183134,1.7546106-1.2734591,4.0719991-1.9104627,6.9533168-1.9104627,2.0045879,0,3.790062.3131295,5.3559836.9396626,1.5658668.626259,2.7969503,1.587356,3.6957175,2.8813176.8971774,1.2949484,1.3468077,3.0067997,1.3468077,5.1363763v2.6310662h5.198761v-2.6310662c0-3.0065804-.6792147-5.5014199-2.0354514-7.4852861-1.3578812-1.9830438-3.2167587-3.4863066-5.5750426-4.5100625-2.3598737-1.0229884-5.0221323-1.5347292-7.9867757-1.5347292-2.9232546,0-5.5026808.4805485-7.7362502,1.4406588-2.2346109.961097-3.9676775,2.3391519-5.198761,4.134329-1.2325637,1.7959994-1.8478039,3.9257953-1.8478039,6.3891684,0,2.4644147.5528556,4.4786509,1.6597179,6.0448465,1.1062593,1.5658668,2.6407145,2.8294035,4.6039136,3.7895138,1.9625961.961097,4.2176548,1.7754969,6.7656693,2.4431995l3.2565577.8141257c1.9625961.4601008,3.6747216.9925635,5.1368697,1.5973332,1.4611065.6058113,2.5993805,1.3887995,3.4137803,2.3491291.8143998.9611519,1.2215997,2.2550586,1.2215997,3.8835842,0,2.3392067-.8987672,4.2811359-2.693725,5.8255134-1.7959446,1.5454739-4.4063438,2.3177174-7.8300465,2.3177174-3.3414185,0-6.0760389-.8867069-8.2058348-2.6622586-2.1297959-1.7745101-3.1947212-4.4787057-3.1947212-8.1117643v-1.3153961h-5.1987062v1.3153961c0,3.424525.7200553,6.2746503,2.1612623,8.5501566,1.4401106,2.2767672,3.4137255,3.9776546,5.9187615,5.1051839,2.5061324,1.1275293,5.345513,1.6914036,8.5192384,1.6914036,3.173232,0,5.9403056-.5324627,8.3001793-1.5973332,2.3582839-1.0649254,4.1862432-2.5574435,5.4806433-4.4787057,1.2939616-1.9204399,1.9422032-4.1754985,1.9422032-6.7651211,0-2.5889099-.6058113-4.6872942-1.8163923-6.2953721-1.2121708-1.6070363-2.8299517-2.8815917-4.8549873-3.8209802ZM137.0143616,15.4233598c-2.3593255-1.2939068-5.0844621-1.9418743-8.1743683-1.9418743-3.0909478,0-5.8155362.6479676-8.1743683,1.9418743-2.3598737,1.2947291-4.1967137,3.1318432-5.5121098,5.5121646-1.3154509,2.3805407-1.9736697,5.1580848-1.9736697,8.3313168v.8141257c0,3.2162105.6582188,6.0037318,1.9736697,8.362564,1.3153961,2.3598737,3.1522361,4.1870106,5.5121098,5.4809174,2.3588321,1.2939068,5.0834206,1.9419292,8.1743683,1.9419292,3.0899062,0,5.8150428-.6480224,8.1743683-1.9419292,2.3593803-1.2939068,4.1972619-3.1210437,5.512658-5.4809174,1.3153961-2.3588321,1.9731215-5.1463535,1.9731215-8.362564v-.8141257c0-3.173232-.6577254-5.9507761-1.9731215-8.3313168-1.3153961-2.3803214-3.1532776-4.2174355-5.512658-5.5121646ZM139.5519056,29.955759c0,3.5077959-.9716224,6.2953172-2.9127841,8.3625092-1.9421484,2.0671919-4.5415289,3.1006508-7.7991282,3.1006508-3.2156623,0-5.8045723-1.0334589-7.7671684-3.1006508-1.9636925-2.0671919-2.9441957-4.8547132-2.9441957-8.3625092v-.563655c0-3.5078507.9805032-6.2953172,2.9441957-8.3625092,1.9625961-2.0671919,4.5515061-3.1006508,7.7671684-3.1006508,3.2575993,0,5.8569798,1.0334589,7.7991282,3.1006508,1.9411617,2.0671919,2.9127841,4.8546584,2.9127841,8.3625092v.563655ZM149.3791942,44.9893737h4.949277V1.141541h-4.949277v43.8478327ZM172.9757932,41.2936562h-.8772779l-9.207882-26.9351669h-5.2615842l10.9618896,30.6308844h7.8929245l10.9613963-30.6308844h-5.2616391l-9.2078272,26.9351669ZM214.574104,38.9133348v-13.8434814c0-3.6742282-1.0865243-6.5243535-3.2571607-8.5503759-2.1721714-2.0249808-5.2206888-3.037992-9.1454425-3.037992-2.5480145,0-4.7291764.4286344-6.5455687,1.2842037-1.8169405.8563368-3.2680698,1.9838661-4.3539363,3.382588-1.0858664,1.3994893-1.8793252,2.9546663-2.3803214,4.6665176l4.6358734,1.5033176c.5009962-2.0043138,1.4401654-3.6016471,2.8184396-4.7918352,1.3783289-1.1901333,3.2984399-1.7851999,5.7625805-1.7851999,2.5061324,0,4.3948865.626259,5.669442,1.8790511,1.2733494,1.2527373,1.9101338,2.965685,1.9101338,5.1365956v2.2550586h-10.3355758c-2.1717329,0-4.1343838.3443218-5.887898,1.0334589-1.7540624.6891371-3.1318432,1.7129477-4.1343838,3.0694585-1.0024858,1.357333-1.5035369,3.079929-1.5035369,5.1678427,0,2.0464701.5010511,3.7798107,1.5035369,5.1989803,1.0025407,1.4202111,2.3803214,2.5055294,4.1343838,3.2573252,1.7535142.7515218,3.6956626,1.1275293,5.8255134,1.1275293s3.862369-.2819372,5.198761-.8455922c1.336392-.5638743,2.3902438-1.2734591,3.1632-2.1297959.7725177-.8555145,1.3882513-1.680659,1.8478587-2.4743918h.7521248v.3131295c0,1.2950032.4166289,2.3284621,1.2529565,3.1009249.8343542.773011,1.9417099,1.1587217,3.3194358,1.1587217h4.3225247v-4.1969878h-2.8189329c-1.1697404,0-1.7540076-.626259-1.7540076-1.8790511ZM209.6881436,31.7097666c0,3.1318432-.908251,5.5650655-2.7245336,7.2973645-1.8165019,1.7333406-4.1873396,2.5996546-7.1095526,2.5996546-2.0889553,0-3.7900072-.4795618-5.1054032-1.4406588-1.3154509-.9601103-1.9731215-2.2962282-1.9731215-4.0091211,0-1.7115772.6361813-2.9958358,1.9101886-3.8521178,1.2735139-.8555693,2.8918978-1.2842585,4.8549873-1.2842585h10.147435v.6891371ZM242.567618,39.0385976c-1.6079682,1.5874109-3.9369237,2.3803214-6.984235,2.3803214-2.0465249,0-3.8739908-.4591141-5.4813011-1.3780548-1.6077489-.9181733-2.8813176-2.2335694-3.8209254-3.9464623-.9396078-1.7116321-1.4091924-3.7583763-1.4091924-6.1386429v-.563655c0-2.3803214.4695846-4.426024,1.4091924-6.1389169.9396078-1.7115772,2.2131765-3.0272474,3.8209254-3.9461882,1.6073104-.9181733,3.4347762-1.3780548,5.4813011-1.3780548,2.0044235,0,3.6957175.3757335,5.0734434,1.1275293,1.3782741.7517959,2.4526284,1.7537883,3.2261329,3.0065804.772408,1.2530114,1.2629337,2.6310662,1.4721253,4.134329l4.8230275-1.0022666c-.3343995-2.0454285-1.0959532-3.96691-2.2859769-5.7629094-1.1906815-1.794903-2.8190426-3.2355618-4.886399-4.3219765-2.0669178-1.0855923-4.5625248-1.6287448-7.4852861-1.6287448-2.9657398,0-5.6279984.6372229-7.9862275,1.9104627-2.3598737,1.2742814-4.218806,3.0909478-5.5750426,5.4497799-1.357333,2.3595996-2.0359996,5.1892772-2.0359996,8.4877719v.688863c0,3.2573252.6786665,6.0760389,2.0359996,8.4563055,1.3562367,2.3803214,3.2151689,4.2077324,5.5750426,5.4812463,2.3582291,1.273185,5.0204877,1.9104627,7.9862275,1.9104627,2.9227613,0,5.4183683-.5432073,7.4852861-1.6287997,2.0673564-1.0853182,3.7061332-2.5259771,4.9177558-4.3219765,1.2106358-1.7951771,2.0454285-3.6957175,2.505036-5.7002506l-4.8853026-1.0649254c-.3762817,2.3392067-1.3689548,4.3015288-2.9756073,5.8881721ZM283.4645669,28.7029669c0-3.0899062-.626259-5.7833571-1.8792155-8.080572-1.252518-2.2962282-2.9861327-4.0607611-5.198761-5.2931055-2.2137247-1.231248-4.7606428-1.8478039-7.6419605-1.8478039-2.9661784,0-5.5970801.6576706-7.8929245,1.9730667-2.2969408,1.3153961-4.0930499,3.1635289-5.3869018,5.5438503-1.2949484,2.3803214-1.9421484,5.1578656-1.9421484,8.3310975v.7514669c0,3.1321173.6472001,5.8881721,1.9421484,8.2684936,1.293852,2.3802666,3.1103539,4.2281253,5.4491769,5.5437955,2.3383844,1.3153961,5.0530505,1.9731215,8.1435597,1.9731215,2.7561097,0,5.0210359-.4386664,6.7965327-1.3153961,1.7746198-.8770586,3.2152786-1.9623769,4.3219765-3.2573252,1.106369-1.2939068,1.9731763-2.5889099,2.5999835-3.8835842l-4.2597014-2.0671919c-.7514669,1.6707366-1.8384298,3.1113955-3.2575993,4.3219765-1.4201563,1.2118967-3.4450823,1.8166664-6.0759841,1.8166664-3.0065256,0-5.5121098-.9289179-7.5166429-2.7875213-2.0046428-1.8575618-3.0694585-4.4367139-3.1946664-7.7359761h24.9931281v-2.2550586ZM258.5337139,26.8865198c.4171771-2.8393807,1.5239846-5.0525023,3.3205322-6.6399132,1.794903-1.5865886,4.0919535-2.3802666,6.8903839-2.3802666,2.7555615,0,5.0205973.793678,6.7960942,2.3802666,1.7745101,1.5874109,2.7455843,3.8005325,2.9127841,6.6399132h-19.9197944Z"/>
+      <path class="s0" d="M63.8672641,4.7088646c0-2.5898755-2.1189891-4.7088646-4.7088646-4.7088646h-28.1929003c-2.5898755,0-4.7088646,2.1189891-4.7088646,4.7088646v10.6107625c0,2.5898755-2.1189891,4.7088646-4.7088646,4.7088646H4.7088646C2.1189891,20.0284916,0,22.1474807,0,24.7373562v16.7737784C0,44.1010102,2.1189891,46.2199992,4.7088646,46.2199992h28.1929003c2.5898755,0,4.7088646-2.1189891,4.7088646-4.7088646v-10.6110245c0-2.5898755,2.1189891-4.7088646,4.7088646-4.7088646h16.8389054c2.5898755,0,4.7088646-2.1189891,4.7088646-4.7088646V4.7088646Z"/>
+    </svg>
+    <span class="nav-tag">Indirect Savings Calculator</span>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge"><span class="hero-dot"></span>INDIRECT SAVINGS CALCULATOR</div>
+    <h1>What could your plant <em>save with Solvace</em>?</h1>
+    <p>Enter your revenue and costs to model the financial impact of OEE improvement and cost reduction.</p>
+    <div class="hero-inputs">
+      <div class="hi"><div class="hi-lbl">Annual Revenue</div><div class="hi-row"><span class="hi-u" id="rev-sym">$</span><input type="text" id="revenue" value="40,000,000" oninput="recalc()"></div></div>
+      <div class="hi"><div class="hi-lbl">Currency</div><div class="hi-row"><select id="currency" onchange="updateCurrency()">
+        <option value="$" selected>$ USD</option><option value="&#8364;">&#8364; EUR</option>
+        <option value="&#163;">&#163; GBP</option><option value="CHF">CHF</option>
+        <option value="CA$">CA$ CAD</option><option value="A$">A$ AUD</option><option value="&#165;">&#165; JPY</option>
+      </select></div></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY CARD -->
+  <div class="sum-card">
+    <div class="sc-left">
+      <div>
+        <div class="sc-ey">Estimated annual savings impact</div>
+        <div class="sc-num" id="big-tot">$0</div>
+        <div class="sc-lbl">in annual savings with Solvace</div>
+      </div>
+      <div class="sc-btns">
+        <button class="btn pri" onclick="enableAll()">Enable all levers</button>
+        <button class="btn" onclick="resetAll()">Reset to defaults</button>
+      </div>
+    </div>
+    <div class="sc-div"></div>
+    <div class="sc-right">
+      <div class="chart-ttl">Savings breakdown by category</div>
+      <div style="display:flex;gap:18px;align-items:center;">
+        <div style="position:relative;width:120px;height:120px;flex-shrink:0;"><canvas id="donut"></canvas></div>
+        <div id="legend" style="flex:1;min-width:0;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OEE SECTION -->
+  <div class="sec-card" style="animation-delay:.06s">
+    <div class="sec-head">
+      <div class="sec-head-left">
+        <div class="sec-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);">&#9881;</div>
+        <div>
+          <div class="sec-name">OEE &mdash; Overall Equipment Effectiveness</div>
+          <div class="sec-desc">Compare your current performance against your target after implementing Solvace</div>
+        </div>
+      </div>
+      <div class="sec-head-right">
+        <div class="sec-pill">A &times; P &times; Q</div>
+        <div class="sec-total" id="tot-oee">$0</div>
+      </div>
+    </div>
+
+    <!-- Before / After comparison -->
+    <div class="oee-compare">
+
+      <!-- BEFORE -->
+      <div class="oee-col before">
+        <div class="oee-col-head">
+          <div class="oee-col-label">&#9679; Before Solvace</div>
+        </div>
+        <div class="mini-bar">
+          <div class="mm"><div class="mm-lbl"><span class="mm-dot" style="background:#1a1aff"></span>Availability</div><div class="mm-val" id="b-av">&#8212;</div><div class="mm-sub" id="b-av-s">&#8212;</div><div class="gauge"><div class="gauge-f" id="b-av-g" style="background:#1a1aff;width:0%"></div></div></div>
+          <div class="mm"><div class="mm-lbl"><span class="mm-dot" style="background:#001391"></span>Performance</div><div class="mm-val" id="b-pf">&#8212;</div><div class="mm-sub" id="b-pf-s">&#8212;</div><div class="gauge"><div class="gauge-f" id="b-pf-g" style="background:#001391;width:0%"></div></div></div>
+          <div class="mm"><div class="mm-lbl"><span class="mm-dot" style="background:#5555ff"></span>Quality</div><div class="mm-val" id="b-qu">&#8212;</div><div class="mm-sub" id="b-qu-s">&#8212;</div><div class="gauge"><div class="gauge-f" id="b-qu-g" style="background:#5555ff;width:0%"></div></div></div>
+          <div class="mm acc"><div class="mm-lbl"><span class="mm-dot" style="background:var(--dblue)"></span>OEE</div><div class="mm-val" id="b-oe" style="color:var(--dblue)">&#8212;</div><div class="mm-sub">World class &#8805;85%</div><div class="gauge"><div class="gauge-f" id="b-oe-g" style="background:linear-gradient(90deg,#1a1aff,#001391);width:0%"></div></div></div>
+        </div>
+        <div class="sp-grid">
+          <div class="sp">
+            <div class="sp-head">
+              <div class="sp-head-left"><div class="sp-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);">&#9201;</div><div class="sp-name">Availability</div></div>
+            </div>
+            <div class="sp-body">
+              <div><div class="field-lbl">Max runtime</div><div class="field-row"><input type="number" id="b-maxrt" value="24" min="0" oninput="calc()"><span class="field-unit">hr</span></div></div>
+              <div><div class="field-lbl">Downtime</div><div class="field-row"><input type="number" id="b-dt" value="4" min="0" oninput="calc()"><span class="field-unit">hr</span></div></div>
+              <div><div class="field-lbl">Cycle time</div><div class="field-row"><input type="number" id="b-ct" value="10" min="0.1" step="0.1" oninput="calc()"><span class="field-unit">sec/unit</span></div></div>
+              <div class="derived">Max: <span id="b-tmax">7,200</span> units</div>
+            </div>
+          </div>
+          <div class="sp">
+            <div class="sp-head">
+              <div class="sp-head-left"><div class="sp-icon" style="background:rgba(0,19,145,0.08);color:var(--dblue);">&#9889;</div><div class="sp-name">Performance</div></div>
+            </div>
+            <div class="sp-body">
+              <div><div class="field-lbl">Units produced</div><div class="field-row"><input type="number" id="b-uprod" value="7000" min="0" oninput="calc()"><span class="field-unit">units</span></div></div>
+            </div>
+          </div>
+          <div class="sp">
+            <div class="sp-head">
+              <div class="sp-head-left"><div class="sp-icon" style="background:rgba(85,85,255,0.08);color:#5555ff;">&#9672;</div><div class="sp-name">Quality</div></div>
+            </div>
+            <div class="sp-body">
+              <div><div class="field-lbl">Scrap units</div><div class="field-row"><input type="number" id="b-scrap" value="300" min="0" oninput="calc()"><span class="field-unit">units</span></div></div>
+              <div class="derived">Good: <span id="b-good">6,700</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AFTER -->
+      <div class="oee-col after">
+        <div class="oee-col-head">
+          <div class="oee-col-label">&#9679; After Solvace</div>
+        </div>
+        <div class="mini-bar">
+          <div class="mm"><div class="mm-lbl"><span class="mm-dot" style="background:#1a1aff"></span>Availability</div><div class="mm-val" id="a-av">&#8212;</div><div class="mm-sub" id="a-av-s">&#8212;</div><div class="gauge"><div class="gauge-f" id="a-av-g" style="background:#1a1aff;width:0%"></div></div></div>
+          <div class="mm"><div class="mm-lbl"><span class="mm-dot" style="background:#001391"></span>Performance</div><div class="mm-val" id="a-pf">&#8212;</div><div class="mm-sub" id="a-pf-s">&#8212;</div><div class="gauge"><div class="gauge-f" id="a-pf-g" style="background:#001391;width:0%"></div></div></div>
+          <div class="mm"><div class="mm-lbl"><span class="mm-dot" style="background:#5555ff"></span>Quality</div><div class="mm-val" id="a-qu">&#8212;</div><div class="mm-sub" id="a-qu-s">&#8212;</div><div class="gauge"><div class="gauge-f" id="a-qu-g" style="background:#5555ff;width:0%"></div></div></div>
+          <div class="mm acc"><div class="mm-lbl"><span class="mm-dot" style="background:var(--dblue)"></span>OEE</div><div class="mm-val" id="a-oe" style="color:var(--dblue)">&#8212;</div><div class="mm-sub">World class &#8805;85%</div><div class="gauge"><div class="gauge-f" id="a-oe-g" style="background:linear-gradient(90deg,#1a1aff,#001391);width:0%"></div></div></div>
+        </div>
+        <div class="sp-grid">
+          <!-- Availability AFTER + info -->
+          <div class="sp">
+            <div class="sp-head">
+              <div class="sp-head-left"><div class="sp-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);">&#9201;</div><div class="sp-name">Availability</div></div>
+              <div class="info-wrap">
+                <div class="info-icon" onclick="togTip(this,'tip-avail')">i</div>
+                <div class="info-tip right" id="tip-avail">
+                  <div class="info-tip-hd">How Solvace improves Availability</div>
+                  <div class="info-tip-body">
+                    <div class="info-f"><div class="info-fd"></div><div class="info-ft"><strong>CIL &mdash;</strong> Operators execute digital cleaning, inspection &amp; lubrication routines. Anomalies are caught early and tagged before they become stoppages.</div></div>
+                    <div class="info-f"><div class="info-fd"></div><div class="info-ft"><strong>Defect Tag &mdash;</strong> Every equipment defect gets an owner, priority, and deadline. Planned resolution replaces reactive breakdown response.</div></div>
+                    <div class="info-f"><div class="info-fd"></div><div class="info-ft"><strong>RCA 1-Pager &mdash;</strong> Structured root cause analysis with verified closure stops repeat failures &mdash; the biggest driver of chronic downtime.</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="sp-body">
+              <div><div class="field-lbl">Max runtime</div><div class="field-row"><input type="number" id="a-maxrt" value="24" min="0" oninput="calc()"><span class="field-unit">hr</span></div></div>
+              <div><div class="field-lbl">Downtime</div><div class="field-row"><input type="number" id="a-dt" value="3" min="0" oninput="calc()"><span class="field-unit">hr</span></div></div>
+              <div><div class="field-lbl">Cycle time</div><div class="field-row"><input type="number" id="a-ct" value="10" min="0.1" step="0.1" oninput="calc()"><span class="field-unit">sec/unit</span></div></div>
+              <div class="derived">Max: <span id="a-tmax">8,640</span> units</div>
+            </div>
+          </div>
+          <!-- Performance AFTER + info -->
+          <div class="sp">
+            <div class="sp-head">
+              <div class="sp-head-left"><div class="sp-icon" style="background:rgba(0,19,145,0.08);color:var(--dblue);">&#9889;</div><div class="sp-name">Performance</div></div>
+              <div class="info-wrap">
+                <div class="info-icon" onclick="togTip(this,'tip-perf')">i</div>
+                <div class="info-tip right" id="tip-perf">
+                  <div class="info-tip-hd">How Solvace improves Performance</div>
+                  <div class="info-tip-body">
+                    <div class="info-f"><div class="info-fd"></div><div class="info-ft"><strong>Centerline &mdash;</strong> Changeover steps are digitized with timestamps. Speed losses and deviations from standard are made visible and improvable in real time.</div></div>
+                    <div class="info-f"><div class="info-fd"></div><div class="info-ft"><strong>OPL / Work Instructions &mdash;</strong> One best method enforced at every workstation reduces operator-driven speed variation and setup errors.</div></div>
+                    <div class="info-f"><div class="info-fd"></div><div class="info-ft"><strong>Kaizen Idea &mdash;</strong> Improvement opportunities captured on the floor are formalised, approved, and replicated across lines via the Replication Matrix.</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="sp-body">
+              <div><div class="field-lbl">Units produced</div><div class="field-row"><input type="number" id="a-uprod" value="7200" min="0" oninput="calc()"><span class="field-unit">units</span></div></div>
+            </div>
+          </div>
+          <!-- Quality AFTER + info -->
+          <div class="sp">
+            <div class="sp-head">
+              <div class="sp-head-left"><div class="sp-icon" style="background:rgba(85,85,255,0.08);color:#5555ff;">&#9672;</div><div class="sp-name">Quality</div></div>
+              <div class="info-wrap">
+                <div class="info-icon" onclick="togTip(this,'tip-qual')">i</div>
+                <div class="info-tip" id="tip-qual">
+                  <div class="info-tip-hd">How Solvace improves Quality</div>
+                  <div class="info-tip-body">
+                    <div class="info-f"><div class="info-fd"></div><div class="info-ft"><strong>Checklist &mdash;</strong> In-process quality gates replace paper check sheets. Deviations trigger alerts and corrective actions before bad product accumulates.</div></div>
+                    <div class="info-f"><div class="info-fd"></div><div class="info-ft"><strong>Non-Conformities &mdash;</strong> Every defect is investigated with root cause tools and cannot be closed without verified corrective actions.</div></div>
+                    <div class="info-f"><div class="info-fd"></div><div class="info-ft"><strong>Centerline &mdash;</strong> Process parameter control prevents drift from spec &mdash; addressing scrap at the source rather than at inspection.</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="sp-body">
+              <div><div class="field-lbl">Scrap units</div><div class="field-row"><input type="number" id="a-scrap" value="200" min="0" oninput="calc()"><span class="field-unit">units</span></div></div>
+              <div class="derived">Good: <span id="a-good">8,050</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue lever -->
+    <div class="rev-strip">
+      <div class="rev-grid">
+        <div>
+          <div class="rev-label">Revenue uplift from OEE improvement</div>
+          <div class="rev-sub">Annual revenue &times; OEE gain (pts) &times; 1.5% per point</div>
+        </div>
+        <div class="rev-derived">
+          Before OEE: <span id="oee-before-disp">&#8212;</span><br>
+          After OEE:&nbsp;&nbsp;<span id="oee-after-disp">&#8212;</span><br>
+          Gain:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="oee-gain-disp">&#8212;</span> pts
+        </div>
+        <div class="rev-controls">
+          <div style="font-size:10px;color:var(--t3);font-family:var(--mono);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;">Revenue factor</div>
+          <div class="lv-row">
+            <input type="range" min="0" max="3" step="0.1" value="1.5" id="sl-rfactor" oninput="updRfactor(this.value)">
+            <span id="pt-rfactor" style="font-family:var(--mono);font-size:11px;color:var(--t2);min-width:50px;text-align:right;">1.5% / pt</span>
+          </div>
+          <div class="lv-bot">
+            <div class="why-btn" onclick="togWhy('oee')">&#9432; How does Solvace do this?</div>
+            <label class="tog"><input type="checkbox" id="tog-oee" checked onchange="togLev('oee',this.checked)"><div class="tog-t"></div><div class="tog-k"></div></label>
+          </div>
+          <div class="why-panel" id="why-oee">
+            <div class="why-hd">OEE improvement &rarr; revenue recovery</div>
+            <div class="why-feats">
+              <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>Every OEE point = more good output &mdash;</strong> Each percentage point of OEE recovered means the line is producing more sellable product in the same time window, directly adding to throughput revenue.</div></div>
+              <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>1.5% / point is a conservative benchmark &mdash;</strong> Based on industry studies of high-volume manufacturing, each OEE point typically recovers 1&ndash;2% of revenue. Adjust the factor to fit your plant economics.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rev-saving">
+          <div class="rev-saving-num" id="sv-oee">$0</div>
+          <div class="rev-saving-lbl">annual revenue uplift</div>
+        </div>
+      </div>
+    </div>
+    <div class="note-strip"><strong>Formula:</strong> Revenue &times; OEE gain points &times; revenue factor &mdash; models the additional throughput value from closing the gap between Before and After OEE.</div>
+  </div>
+
+  <!-- COSTS SECTION -->
+  <div class="sec-card" style="animation-delay:.10s">
+    <div class="sec-head">
+      <div class="sec-head-left">
+        <div class="sec-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);font-size:13px;font-family:var(--mono);font-weight:700;">$</div>
+        <div>
+          <div class="sec-name">Costs</div>
+          <div class="sec-desc">Enter actual annual costs &mdash; adjust levers to model the reduction Solvace can drive</div>
+        </div>
+      </div>
+      <div class="sec-head-right">
+        <div class="sec-total" id="tot-costs">$0</div>
+      </div>
+    </div>
+
+    <div class="cost-result-bar">
+      <div class="crm"><div class="crm-lbl"><span class="crm-dot" style="background:#1a1aff"></span>Capital</div><div class="crm-val" id="rv-c1">&#8212;</div><div class="crm-sub" id="rs-c1">Enter cost below</div><div class="gauge"><div class="gauge-f" id="rb-c1" style="background:#1a1aff;width:0%"></div></div></div>
+      <div class="crm"><div class="crm-lbl"><span class="crm-dot" style="background:#001391"></span>Labour</div><div class="crm-val" id="rv-c2">&#8212;</div><div class="crm-sub" id="rs-c2">Enter cost below</div><div class="gauge"><div class="gauge-f" id="rb-c2" style="background:#001391;width:0%"></div></div></div>
+      <div class="crm"><div class="crm-lbl"><span class="crm-dot" style="background:#5555ff"></span>Utilities</div><div class="crm-val" id="rv-c3">&#8212;</div><div class="crm-sub" id="rs-c3">Enter cost below</div><div class="gauge"><div class="gauge-f" id="rb-c3" style="background:#5555ff;width:0%"></div></div></div>
+      <div class="crm acc"><div class="crm-lbl"><span class="crm-dot" style="background:#0044cc"></span>Maintenance</div><div class="crm-val" id="rv-c4">&#8212;</div><div class="crm-sub" id="rs-c4">Enter cost below</div><div class="gauge"><div class="gauge-f" id="rb-c4" style="background:#0044cc;width:0%"></div></div></div>
+    </div>
+
+    <div class="cost-grid">
+      <!-- Capital -->
+      <div class="csp" id="csp-c1">
+        <div class="csp-head"><div class="csp-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);">&#9670;</div><div><div class="csp-name">Capital</div><div class="csp-desc">Capex / depreciation</div></div></div>
+        <div class="csp-body">
+          <div><div class="field-lbl">Annual capital cost</div><div class="field-row"><span class="field-sym csym">$</span><input type="text" id="cost-capital" value="2,000,000" oninput="recalc()"></div></div>
+          <div class="csp-lever">
+            <div class="lv-header"><span class="lv-name">Reduction %</span><span class="lv-val" id="sv-c1">$0</span></div>
+            <div class="lv-row"><input type="range" min="0" max="100" step="1" value="8" id="sl-c1" oninput="updPct('c1',this.value)"><span class="lv-pct" id="pt-c1">8%</span></div>
+            <div class="lv-bot2">
+              <div class="why-btn" onclick="togWhy('c1')">&#9432; How?</div>
+              <label class="tog"><input type="checkbox" checked onchange="togLev('c1',this.checked)"><div class="tog-t"></div><div class="tog-k"></div></label>
+            </div>
+            <div class="why-panel" id="why-c1">
+              <div class="why-hd">How Solvace reduces capital cost</div>
+              <div class="why-feats">
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>CIL + Checklist &mdash;</strong> Extending asset life through structured preventive maintenance defers capital replacement cycles and reduces annual depreciation.</div></div>
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>Kaizen Idea &mdash;</strong> Cost reduction projects are captured with ROI targets and tracked to closure, making capital spend decisions data-driven.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Labour -->
+      <div class="csp" id="csp-c2">
+        <div class="csp-head"><div class="csp-icon" style="background:rgba(0,19,145,0.08);color:var(--dblue);">&#9678;</div><div><div class="csp-name">Labour</div><div class="csp-desc">Direct labour cost</div></div></div>
+        <div class="csp-body">
+          <div><div class="field-lbl">Annual labour cost</div><div class="field-row"><span class="field-sym csym">$</span><input type="text" id="cost-labour" value="8,000,000" oninput="recalc()"></div></div>
+          <div class="csp-lever">
+            <div class="lv-header"><span class="lv-name">Reduction %</span><span class="lv-val" id="sv-c2">$0</span></div>
+            <div class="lv-row"><input type="range" min="0" max="100" step="1" value="10" id="sl-c2" oninput="updPct('c2',this.value)"><span class="lv-pct" id="pt-c2">10%</span></div>
+            <div class="lv-bot2">
+              <div class="why-btn" onclick="togWhy('c2')">&#9432; How?</div>
+              <label class="tog"><input type="checkbox" checked onchange="togLev('c2',this.checked)"><div class="tog-t"></div><div class="tog-k"></div></label>
+            </div>
+            <div class="why-panel" id="why-c2">
+              <div class="why-hd">How Solvace reduces labour cost</div>
+              <div class="why-feats">
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>Checklist &amp; CIL &mdash;</strong> Digital floor data capture eliminates manual reporting, recovering 30&ndash;45 min/operator/day.</div></div>
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>Digital Obeya &mdash;</strong> Auto-generated shift reports mean supervisors walk into tier meetings with data already prepared.</div></div>
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>Standard Work &mdash;</strong> One best method reduces variation and rework-driven labour waste across all shifts.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Utilities -->
+      <div class="csp" id="csp-c3">
+        <div class="csp-head"><div class="csp-icon" style="background:rgba(85,85,255,0.08);color:#5555ff;">&#9889;</div><div><div class="csp-name">Utilities</div><div class="csp-desc">Energy &amp; utilities</div></div></div>
+        <div class="csp-body">
+          <div><div class="field-lbl">Annual utilities cost</div><div class="field-row"><span class="field-sym csym">$</span><input type="text" id="cost-utilities" value="1,500,000" oninput="recalc()"></div></div>
+          <div class="csp-lever">
+            <div class="lv-header"><span class="lv-name">Reduction %</span><span class="lv-val" id="sv-c3">$0</span></div>
+            <div class="lv-row"><input type="range" min="0" max="100" step="1" value="10" id="sl-c3" oninput="updPct('c3',this.value)"><span class="lv-pct" id="pt-c3">10%</span></div>
+            <div class="lv-bot2">
+              <div class="why-btn" onclick="togWhy('c3')">&#9432; How?</div>
+              <label class="tog"><input type="checkbox" checked onchange="togLev('c3',this.checked)"><div class="tog-t"></div><div class="tog-k"></div></label>
+            </div>
+            <div class="why-panel" id="why-c3">
+              <div class="why-hd">How Solvace reduces utilities cost</div>
+              <div class="why-feats">
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>Centerline &mdash;</strong> Parameters drifting above nominal consume excess energy. Real-time alerts recover waste before it accumulates.</div></div>
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>Digital Obeya &mdash;</strong> Energy per unit as a daily KPI shifts energy from a facilities issue to a controllable production cost.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Maintenance -->
+      <div class="csp" id="csp-c4">
+        <div class="csp-head"><div class="csp-icon" style="background:rgba(0,68,204,0.08);color:#0044cc;">&#9671;</div><div><div class="csp-name">Maintenance</div><div class="csp-desc">Labour &amp; parts preventive maintenance </div></div></div>
+        <div class="csp-body">
+          <div><div class="field-lbl">Annual maintenance cost</div><div class="field-row"><span class="field-sym csym">$</span><input type="text" id="cost-maint" value="900,000" oninput="recalc()"></div></div>
+          <div class="csp-lever">
+            <div class="lv-header"><span class="lv-name">Reduction %</span><span class="lv-val" id="sv-c4">$0</span></div>
+            <div class="lv-row"><input type="range" min="0" max="100" step="1" value="20" id="sl-c4" oninput="updPct('c4',this.value)"><span class="lv-pct" id="pt-c4">20%</span></div>
+            <div class="lv-bot2">
+              <div class="why-btn" onclick="togWhy('c4')">&#9432; How?</div>
+              <label class="tog"><input type="checkbox" checked onchange="togLev('c4',this.checked)"><div class="tog-t"></div><div class="tog-k"></div></label>
+            </div>
+            <div class="why-panel" id="why-c4">
+              <div class="why-hd">How Solvace reduces maintenance cost</div>
+              <div class="why-feats">
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>Defect Tag + Action Plans &mdash;</strong> Planned maintenance replaces reactive response, eliminating emergency labour premiums (3&times; vs. planned) and parts premiums.</div></div>
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>CIL history &mdash;</strong> Digital component replacement history enables right-sizing of spare parts inventory, reducing overstock and emergency procurement.</div></div>
+                <div class="why-f"><div class="why-fd"></div><div class="why-ft"><strong>Checklist &mdash;</strong> PM adherence tracking ensures overdue preventive work is visible before it becomes a breakdown.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note-strip"><strong>Note:</strong> Enter actual annual cost figures to get real savings estimates. Each lever models the % reduction Solvace can drive on that cost line.</div>
+  </div>
+
+</div>
+
+<script>
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function gn(id){const e=document.getElementById(id);return e?(parseFloat(e.value)||0):0;}
+function gcv(id){const e=document.getElementById(id);return e?parseFloat(e.value.replace(/[,$%]/g,''))||0:0;}
+function st(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function shi(id,v){const e=document.getElementById(id);if(e)e.innerHTML=v;}
+function sb(id,p){const e=document.getElementById(id);if(e)e.style.width=Math.min(100,Math.max(0,p))+'%';}
+function p2(v){return(isNaN(v)||!isFinite(v))?'\u2014':(v*100).toFixed(1)+'%';}
+function fn(v,d){return isNaN(v)?'0':v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function getCur(){const e=document.getElementById('currency');return e?e.value:'$';}
+function fmt(n){const s=getCur();n=Math.round(n);if(n>=1e6)return s+(n/1e6).toFixed(2)+'M';if(n>=1000)return s+Math.round(n/1000)+'K';return s+n.toLocaleString('en-US');}
+function fmtF(n){return getCur()+Math.round(n).toLocaleString('en-US');}
+function oeeColor(v){return v>=0.85?'#008800':v>=0.65?'var(--dblue)':'#cc3300';}
+
+function updateCurrency(){
+  const s=getCur(),sh=s.length<=1?s:s.replace(/[A-Z]/g,'').trim()||s[0];
+  const r=document.getElementById('rev-sym');if(r)r.textContent=sh;
+  document.querySelectorAll('.csym').forEach(e=>e.textContent=sh);
+  recalc();
+}
+
+// ── OEE CALC ──────────────────────────────────────────────────────────────────
+function oeeFromInputs(pfx){
+  const maxRT=gn(pfx+'-maxrt'),dt=gn(pfx+'-dt'),ct=gn(pfx+'-ct');
+  const up=gn(pfx+'-uprod'),sc=gn(pfx+'-scrap');
+  const run=Math.max(0,maxRT-dt);
+  const av=maxRT>0?run/maxRT:0;
+  const tm=ct>0?Math.round((run*3600)/ct):0;
+  const pf=tm>0?Math.min(1,up/tm):0;
+  const good=Math.max(0,up-sc);
+  const qu=up>0?good/up:0;
+  return {av,pf,qu,oee:av*pf*qu,run,tm,up,good};
+}
+
+function renderBar(pfx,d){
+  st(pfx+'-av',p2(d.av));st(pfx+'-pf',p2(d.pf));st(pfx+'-qu',p2(d.qu));st(pfx+'-oe',p2(d.oee));
+  st(pfx+'-av-s',fn(d.run,1)+' hr / '+fn(gn((pfx==='b'?'b':'a')+'-maxrt'),1)+' max');
+  st(pfx+'-pf-s',fn(d.up,0)+' / '+fn(d.tm,0)+' max');
+  st(pfx+'-qu-s',fn(d.good,0)+' good / '+fn(d.up,0));
+  sb(pfx+'-av-g',d.av*100);sb(pfx+'-pf-g',d.pf*100);sb(pfx+'-qu-g',d.qu*100);sb(pfx+'-oe-g',d.oee*100);
+  const el=document.getElementById(pfx+'-oe');if(el)el.style.color=oeeColor(d.oee);
+}
+
+// ── LEVER STATE ───────────────────────────────────────────────────────────────
+let rfactor=1.5;
+const state={oee:{on:true},c1:{on:true,pct:8},c2:{on:true,pct:10},c3:{on:true,pct:10},c4:{on:true,pct:20}};
+
+function calc(){
+  const b=oeeFromInputs('b'),a=oeeFromInputs('a');
+  renderBar('b',b);renderBar('a',a);
+
+  // tmax derived labels
+  st('b-tmax',b.tm.toLocaleString('en-US'));
+  st('a-tmax',a.tm.toLocaleString('en-US'));
+  st('b-good',b.good.toLocaleString('en-US'));
+  st('a-good',a.good.toLocaleString('en-US'));
+
+  const gainPts=Math.max(0,(a.oee-b.oee)*100);
+  st('oee-before-disp',p2(b.oee));
+  st('oee-after-disp',p2(a.oee));
+  st('oee-gain-disp',gainPts.toFixed(1));
+  recalc();
+}
+
+function recalc(){
+  const b=oeeFromInputs('b'),a=oeeFromInputs('a');
+  const gainPts=Math.max(0,(a.oee-b.oee)*100);
+  const oeeVal=state.oee.on?gcv('revenue')*0.01*rfactor*gainPts:0;
+
+  const sv={
+    oee:oeeVal,
+    c1:state.c1.on?gcv('cost-capital')*(state.c1.pct/100):0,
+    c2:state.c2.on?gcv('cost-labour')*(state.c2.pct/100):0,
+    c3:state.c3.on?gcv('cost-utilities')*(state.c3.pct/100):0,
+    c4:state.c4.on?gcv('cost-maint')*(state.c4.pct/100):0,
+  };
+
+  const totOEE=sv.oee;
+  const totCosts=sv.c1+sv.c2+sv.c3+sv.c4;
+  const grand=totOEE+totCosts;
+
+  document.getElementById('big-tot').textContent=fmtF(grand);
+  st('tot-oee',fmt(totOEE));
+  st('tot-costs',fmt(totCosts));
+
+  // OEE lever display
+  const oeeEl=document.getElementById('sv-oee');
+  if(oeeEl){oeeEl.textContent=fmt(oeeVal);oeeEl.className='rev-saving-num'+(state.oee.on?'':' off');}
+
+  // Cost levers
+  const cmap={c1:'capital',c2:'labour',c3:'utilities',c4:'maint'};
+  Object.entries(cmap).forEach(([id,key])=>{
+    const raw=gcv('cost-'+key);
+    const s=state[id].on?raw*(state[id].pct/100):0;
+    const el=document.getElementById('sv-'+id);
+    if(el){el.textContent=fmt(raw*(state[id].pct/100));el.className='lv-val'+(state[id].on?'':' off');}
+    if(raw>0){
+      shi('rv-'+id,fmt(s));
+      st('rs-'+id,'saves '+fmt(s)+' / yr');
+      sb('rb-'+id,raw>0?(s/raw*100):0);
+    } else {
+      shi('rv-'+id,'\u2014');
+      st('rs-'+id,'Enter cost below');
+      sb('rb-'+id,0);
+    }
+    const csp=document.getElementById('csp-'+id);
+    if(csp)csp.classList.toggle('lev-off',!state[id].on||(raw===0));
+  });
+
+  updateChart(sv);
+}
+
+// ── DONUT ─────────────────────────────────────────────────────────────────────
+let donutChart=null;
+const CT=[
+  {label:'OEE / Revenue',color:'#1a1aff',id:'oee'},
+  {label:'Capital',      color:'#001391',id:'c1'},
+  {label:'Labour',       color:'#5555ff',id:'c2'},
+  {label:'Utilities',    color:'#88aaff',id:'c3'},
+  {label:'Maintenance',  color:'#0044cc',id:'c4'},
+];
+function updateChart(sv){
+  const data=CT.map(c=>Math.max(0,Math.round(sv[c.id]||0)));
+  const colors=CT.map(c=>c.color),labels=CT.map(c=>c.label);
+  if(!donutChart){
+    donutChart=new Chart(document.getElementById('donut'),{type:'doughnut',
+      data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverBorderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'66%',
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmtF(ctx.parsed)}}}}});
+  }else{donutChart.data.datasets[0].data=data;donutChart.update('none');}
+  const tot=data.reduce((a,b)=>a+b,0);
+  document.getElementById('legend').innerHTML=CT.map((c,i)=>data[i]>0?
+    `<div class="lrow"><div class="ldot" style="background:${colors[i]}"></div><span style="flex:1;font-size:11px;color:var(--t2)">${c.label}</span><span style="font-family:var(--mono);font-size:11px;color:var(--blue);font-weight:600">${fmt(data[i])}</span><span style="font-family:var(--mono);font-size:10px;color:var(--t3);margin-left:5px">${tot>0?Math.round(data[i]/tot*100):0}%</span></div>`:''
+  ).join('');
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────────────────────
+function togTip(iconEl, id){
+  const tip = document.getElementById(id);
+  const isOpen = tip.classList.contains('open');
+  document.querySelectorAll('.info-tip.open').forEach(el => el.classList.remove('open'));
+  if(isOpen) return;
+  // Move to body so it's never clipped by overflow:hidden parents
+  if(tip.parentElement !== document.body) document.body.appendChild(tip);
+  const rect = iconEl.getBoundingClientRect();
+  const tipW = 260, margin = 10;
+  const scrollY = window.scrollY || window.pageYOffset;
+  const scrollX = window.scrollX || window.pageXOffset;
+  let top = rect.bottom + scrollY + 6;
+  let left = rect.left + scrollX + rect.width/2 - tipW/2;
+  if(left < scrollX + margin) left = scrollX + margin;
+  if(left + tipW > scrollX + window.innerWidth - margin) left = scrollX + window.innerWidth - tipW - margin;
+  tip.style.position = 'absolute';
+  tip.style.top = top + 'px';
+  tip.style.left = left + 'px';
+  tip.classList.add('open');
+}
+// Close tips when clicking outside
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.info-wrap'))
+    document.querySelectorAll('.info-tip.open').forEach(el=>el.classList.remove('open'));
+});
+
+function togWhy(id){document.getElementById('why-'+id).classList.toggle('open');}
+function togLev(id,val){state[id].on=val;recalc();}
+function updPct(id,val){
+  state[id].pct=parseFloat(val);
+  document.getElementById('pt-'+id).textContent=Math.round(parseFloat(val))+'%';
+  recalc();
+}
+function updRfactor(val){
+  rfactor=parseFloat(val);
+  document.getElementById('pt-rfactor').textContent=parseFloat(val).toFixed(1)+'% / pt';
+  recalc();
+}
+function enableAll(){
+  Object.keys(state).forEach(id=>{
+    state[id].on=true;
+    const t=document.querySelector('[onchange*="togLev(\''+id+'\'"]');if(t)t.checked=true;
+    const t2=document.getElementById('tog-'+id);if(t2)t2.checked=true;
+    const csp=document.getElementById('csp-'+id);if(csp)csp.classList.remove('lev-off');
+  });
+  recalc();
+}
+function resetAll(){
+  const defs={oee:{on:true},c1:{on:true,pct:8},c2:{on:true,pct:10},c3:{on:true,pct:10},c4:{on:true,pct:20}};
+  Object.entries(defs).forEach(([id,d])=>{
+    state[id].on=d.on;if(d.pct!==undefined)state[id].pct=d.pct;
+    const sl=document.getElementById('sl-'+id);if(sl&&d.pct!==undefined)sl.value=d.pct;
+    const pt=document.getElementById('pt-'+id);if(pt&&d.pct!==undefined)pt.textContent=Math.round(d.pct)+'%';
+    const wp=document.getElementById('why-'+id);if(wp)wp.classList.remove('open');
+    const t2=document.getElementById('tog-'+id);if(t2)t2.checked=d.on;
+    const csp=document.getElementById('csp-'+id);if(csp)csp.classList.toggle('lev-off',!d.on);
+  });
+  rfactor=1.5;
+  const sl=document.getElementById('sl-rfactor');if(sl)sl.value=1.5;
+  const pt=document.getElementById('pt-rfactor');if(pt)pt.textContent='1.5% / pt';
+  recalc();
+}
+
+// Init
+calc();
+</script>
+
+<!-- ══ REVIEW PANEL ══ -->
+<button id="rp-fab" onclick="togglePanel()" title="Review panel">💬</button>
+<div id="review-panel">
+  <div id="rp-header">
+    <div id="rp-title">
+      <span id="rp-dot"></span>
+      Review — Indirect Savings
+    </div>
+    <button id="rp-collapse" onclick="togglePanel()">◀</button>
+  </div>
+  <div id="rp-body">
+    <input id="rp-name-inp" type="text" placeholder="Your name (reviewer)" maxlength="40" autocomplete="name">
+    <button id="rp-toggle-btn" onclick="toggleCommentMode()">💬 Enable comment mode</button>
+    <div class="rp-row">
+      <button class="rp-btn" onclick="toggleList()">📋 List (<span id="rp-count">0</span>)</button>
+      <button class="rp-btn" onclick="exportComments()">⬇ Export</button>
+    </div>
+    <button class="rp-btn" style="width:100%" onclick="toggleMarkersVisible()">👁 Hide comments</button>
+    <div id="rp-list" style="display:none;"></div>
+    <div id="rp-backend-tag">backend: Firebase (real-time)</div>
+  </div>
+</div>
+
+<div id="cm-popup">
+  <h4>💬 Add a comment</h4>
+  <textarea id="cm-text-inp" placeholder="Write your comment…" maxlength="500"></textarea>
+  <div class="cm-popup-btns">
+    <button onclick="cancelComment()">Cancel</button>
+    <button class="pri" onclick="submitComment()">Post</button>
+  </div>
+</div>
+
+<div id="comment-hint">Click anywhere to comment · Esc to cancel</div>
+<div id="markers-layer" style="position:absolute;top:0;left:0;width:100%;pointer-events:none;"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBd6YbOEZgFkmGABuMz7LnfI33XNALSQ9c",
+  authDomain: "solvace-reviews.firebaseapp.com",
+  projectId: "solvace-reviews",
+  storageBucket: "solvace-reviews.firebasestorage.app",
+  messagingSenderId: "197430755300",
+  appId: "1:197430755300:web:c3c2f3d2e83b838215d1f1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const COLL = "indirect_comments"; // separate collection from ROI tool
+
+let commentMode = false;
+let panelCollapsed = false;
+let listVisible = false;
+let markersVisible = true;
+let pendingX = 0, pendingY = 0;
+let allComments = [];
+
+const q = query(collection(db, COLL), orderBy("ts", "asc"));
+onSnapshot(q, snap => {
+  allComments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderMarkers();
+  renderList();
+  updateCount();
+  document.getElementById("rp-dot").classList.add("live");
+});
+
+function renderMarkers(){
+  const layer = document.getElementById("markers-layer");
+  if(!markersVisible){ layer.innerHTML = ""; return; }
+  layer.innerHTML = "";
+  allComments.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "cm-marker";
+    el.style.left = c.x + "px";
+    el.style.top  = c.y + "px";
+    el.style.pointerEvents = "all";
+    el.textContent = i + 1;
+    el.title = `${c.author}: ${c.text}`;
+    el.onclick = () => scrollToComment(c.id);
+    layer.appendChild(el);
+  });
+  resizeLayer();
+}
+
+function resizeLayer(){
+  const layer = document.getElementById("markers-layer");
+  layer.style.height = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) + "px";
+}
+window.addEventListener("resize", resizeLayer);
+setTimeout(resizeLayer, 800);
+
+function renderList(){
+  const el = document.getElementById("rp-list");
+  if(!allComments.length){ el.innerHTML = '<div id="rp-empty">No comments yet.</div>'; return; }
+  el.innerHTML = allComments.map((c, i) => `
+    <div class="rp-note-item" id="li-${c.id}" onclick="highlightMarker(${i})">
+      <button class="rp-note-del" onclick="event.stopPropagation();deleteComment('${c.id}')" title="Delete">✕</button>
+      <div class="rp-note-author">${escH(c.author||"Anonymous")}</div>
+      <div class="rp-note-text">${escH(c.text)}</div>
+      <div class="rp-note-date">${c.dateStr||""}</div>
+    </div>`).join("");
+}
+
+function updateCount(){ document.getElementById("rp-count").textContent = allComments.length; }
+function escH(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+window.toggleCommentMode = function(){
+  commentMode = !commentMode;
+  document.body.classList.toggle("comment-mode", commentMode);
+  const btn = document.getElementById("rp-toggle-btn");
+  btn.classList.toggle("active", commentMode);
+  btn.textContent = commentMode ? "🛑 Disable comment mode" : "💬 Enable comment mode";
+  document.getElementById("comment-hint").classList.toggle("show", commentMode);
+};
+
+document.addEventListener("click", e => {
+  if(!commentMode) return;
+  if(e.target.closest("#review-panel")||e.target.closest("#cm-popup")||e.target.closest(".cm-marker")||e.target.closest("#rp-fab")) return;
+  pendingX = e.pageX - 12; pendingY = e.pageY - 12;
+  const p = document.getElementById("cm-popup");
+  p.style.display = "block";
+  let px = e.clientX + 12, py = e.clientY + 12;
+  if(px + 290 > window.innerWidth) px = e.clientX - 292;
+  if(py + 180 > window.innerHeight) py = e.clientY - 160;
+  p.style.left = px + "px"; p.style.top = py + "px";
+  document.getElementById("cm-text-inp").value = "";
+  setTimeout(() => document.getElementById("cm-text-inp").focus(), 50);
+});
+
+document.addEventListener("keydown", e => {
+  if(e.key==="Escape"){ cancelComment(); if(commentMode) toggleCommentMode(); }
+  if((e.ctrlKey||e.metaKey)&&e.key==="Enter"&&document.getElementById("cm-popup").style.display==="block") submitComment();
+});
+
+window.cancelComment = function(){ document.getElementById("cm-popup").style.display = "none"; };
+
+window.submitComment = async function(){
+  const text = document.getElementById("cm-text-inp").value.trim();
+  if(!text) return;
+  const author = document.getElementById("rp-name-inp").value.trim() || "Anonymous";
+  localStorage.setItem("solvace_reviewer_name", author);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) + " · " +
+                  now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  await addDoc(collection(db, COLL), { x: pendingX, y: pendingY, author, text, dateStr, ts: serverTimestamp() });
+  cancelComment();
+  if(commentMode) toggleCommentMode();
+};
+
+window.deleteComment = async function(id){ await deleteDoc(doc(db, COLL, id)); };
+
+window.togglePanel = function(){
+  panelCollapsed = !panelCollapsed;
+  document.getElementById("review-panel").classList.toggle("collapsed", panelCollapsed);
+  document.getElementById("rp-collapse").textContent = panelCollapsed ? "▶" : "◀";
+  document.getElementById("rp-fab").classList.toggle("hidden", !panelCollapsed);
+};
+
+window.toggleList = function(){
+  listVisible = !listVisible;
+  const el = document.getElementById("rp-list");
+  el.style.display = listVisible ? "flex" : "none";
+  if(listVisible) el.style.flexDirection = "column";
+};
+
+window.toggleMarkersVisible = function(){
+  markersVisible = !markersVisible;
+  document.querySelector(".rp-btn[onclick='toggleMarkersVisible()']").textContent =
+    markersVisible ? "👁 Hide comments" : "👁 Show comments";
+  renderMarkers();
+};
+
+window.exportComments = function(){
+  const rows = [["#","Author","Comment","Date","X","Y"]];
+  allComments.forEach((c,i) => rows.push([i+1,c.author||"",c.text||"",c.dateStr||"",c.x,c.y]));
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  a.download = "indirect_comments.csv";
+  a.click();
+};
+
+window.scrollToComment = function(id){
+  if(!listVisible) toggleList();
+  document.getElementById("li-"+id)?.scrollIntoView({behavior:"smooth",block:"nearest"});
+};
+
+window.highlightMarker = function(i){
+  document.querySelectorAll(".cm-marker")[i]?.scrollIntoView({behavior:"smooth",block:"center"});
+};
+
+const saved = localStorage.getItem("solvace_reviewer_name");
+if(saved) document.getElementById("rp-name-inp").value = saved;
+document.getElementById("rp-fab").classList.add("hidden");
+</script>
+</body>
+</html>
