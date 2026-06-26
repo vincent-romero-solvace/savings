@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvace ROI Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --blue:#1a1aff;--dblue:#001391;--bg:#f5f5f7;--bg2:#fff;--bg3:#ededf2;--bg4:#dcdce8;
+  --border:rgba(26,26,255,0.10);--border2:rgba(26,26,255,0.18);
+  --text:#0a0a1a;--t2:#4a4a6a;--t3:#8a8aaa;
+  --green:#00aa55;--red:#cc2200;
+  --serif:'Space Grotesk',sans-serif;--sans:'Inter',sans-serif;--mono:'Inter',monospace;
+  --r:10px;--r2:14px;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh;
+  background-image:radial-gradient(ellipse at 10% 0%,rgba(26,26,255,0.04) 0%,transparent 50%);}
+
+/* NAV */
+.nav{background:#ffffff;border-bottom:1px solid #e8e8ec;padding:10px 0;position:sticky;top:0;z-index:200;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+@keyframes fadeOut{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.save-flash{animation:fadeOut 2.5s forwards;}
+.nav-in{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.nav-tag{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:0.08em;text-transform:uppercase;}
+
+/* SECTION ANCHORS NAV */
+.sec-nav{background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:100;}
+.sec-nav-in{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;gap:0;}
+.sec-nav-btn{padding:7px 16px;font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;}
+.sec-nav-btn:hover{color:var(--blue);}
+.sec-nav-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+.wrap{max-width:1200px;margin:0 auto;padding:0 1.5rem 80px;}
+
+/* SECTION TITLES */
+.section{padding-top:32px;margin-bottom:4px;}
+.section-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.section-sub{font-size:11px;color:var(--t3);font-family:var(--mono);margin-bottom:14px;}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:12px;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);}
+.card-hl{display:flex;align-items:center;gap:9px;}
+.card-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+.card-title{font-family:var(--serif);font-size:13px;font-weight:600;}
+.card-sub{font-size:10px;color:var(--t3);font-family:var(--mono);}
+.card-hr{display:flex;align-items:center;gap:8px;}
+
+/* FORMS */
+.lbl{font-size:10px;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;}
+.finp{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:5px 8px;outline:none;transition:border-color .15s;appearance:none;width:100%;}
+.finp:focus{border-color:rgba(26,26,255,0.5);}
+.fsel{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:5px 8px;outline:none;appearance:none;width:100%;}
+.funit{font-size:10px;color:var(--t3);font-family:var(--mono);white-space:nowrap;margin-left:4px;}
+.gi{padding:11px 14px;border-right:1px solid var(--border);}
+.gi:last-child{border-right:none;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);}
+
+/* TOGGLES */
+.tog{position:relative;width:32px;height:18px;flex-shrink:0;}
+.tog input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;margin:0;z-index:1;}
+.tog-t{position:absolute;inset:0;background:var(--bg4);border:1px solid var(--border2);border-radius:9px;transition:all .15s;pointer-events:none;}
+.tog-k{position:absolute;top:2px;left:2px;width:12px;height:12px;background:var(--t3);border-radius:50%;transition:transform .15s,background .15s;pointer-events:none;}
+.tog input:checked~.tog-t{background:rgba(26,26,255,0.10);border-color:var(--blue);}
+.tog input:checked~.tog-k{transform:translateX(14px);background:var(--blue);}
+
+/* BADGES */
+.badge{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:0.04em;}
+.badge-core{background:#e8f0fe;color:var(--dblue);}
+.badge-t1{background:rgba(0,170,85,0.10);color:#007a3a;}
+.badge-t2{background:rgba(245,158,11,0.12);color:#b45309;}
+.badge-t3{background:rgba(204,34,0,0.08);color:#a01800;}
+.badge-custom{background:rgba(26,26,255,0.08);color:var(--blue);}
+
+/* ── RESULTS ── */
+/* Results layout: KPI stack left + year cards right */
+.results-layout{display:grid;grid-template-columns:200px 1fr;gap:12px;margin-bottom:12px;align-items:stretch;}
+.kpi-stack{display:flex;flex-direction:column;gap:6px;}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);flex:1;}
+.kpi-card.kc-green{background:rgba(0,170,85,0.05);border-color:rgba(0,170,85,0.20);}
+.kpi-card.kc-red{background:rgba(204,34,0,0.04);border-color:rgba(204,34,0,0.15);}
+.kpi-card.kc-blue{background:rgba(26,26,255,0.04);border-color:rgba(26,26,255,0.14);}
+/* Hero net benefit card */
+.kpi-card.kc-hero-green{background:linear-gradient(135deg,rgba(0,170,85,0.12),rgba(0,170,85,0.06));border-color:rgba(0,170,85,0.35);border-width:1.5px;box-shadow:0 2px 12px rgba(0,170,85,0.12);}
+.kpi-card.kc-hero-red{background:linear-gradient(135deg,rgba(204,34,0,0.10),rgba(204,34,0,0.04));border-color:rgba(204,34,0,0.30);border-width:1.5px;box-shadow:0 2px 12px rgba(204,34,0,0.10);}
+.kpi-val-hero{font-family:var(--serif);font-size:30px;font-weight:800;line-height:1;letter-spacing:-0.03em;}
+.kpi-val-hero.green{color:var(--green);}
+.kpi-val-hero.red{color:var(--red);}
+.kpi-divider{height:1px;background:var(--border);margin:6px 0;}
+.kpi-lbl{font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:3px;}
+.kpi-val{font-family:var(--serif);font-size:22px;font-weight:700;line-height:1;letter-spacing:-0.02em;}
+.kpi-val.green{color:var(--green);}
+.kpi-val.red{color:var(--red);}
+.kpi-val.blue{color:var(--blue);}
+.kpi-sub{font-size:10px;color:var(--t2);font-family:var(--mono);margin-top:2px;}
+
+.yr-timeline{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;height:100%;}
+.yrc{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.yrc:last-child{border-right:none;}
+.yrc-head{background:var(--blue);color:#fff;padding:8px 12px;font-family:var(--serif);font-size:12px;font-weight:600;text-align:center;letter-spacing:-0.01em;}
+.yrc-body{flex:1;display:flex;flex-direction:column;padding:10px 12px;gap:8px;}
+.yrc-line{display:flex;flex-direction:column;gap:1px;}
+.yrc-lbl{font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:0.06em;}
+.yrc-amount{font-family:var(--serif);font-size:14px;font-weight:700;line-height:1;}
+.yrc-divider{height:1px;background:var(--border);margin:4px 0;}
+.yrc-net-block{padding:10px 12px;border-top:2px solid var(--border);text-align:center;}
+.yrc-net-lbl{font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;}
+.yrc-net-val{font-family:var(--serif);font-size:16px;font-weight:800;line-height:1;letter-spacing:-0.02em;}
+
+/* Module breakdown */
+.bk-tbl{width:100%;border-collapse:collapse;}
+.bk-tbl th{text-align:left;padding:5px 10px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:0.07em;}
+.bk-tbl th:last-child{text-align:right;}
+.bk-tbl td{padding:4px 10px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;vertical-align:middle;}
+.bk-tbl tr:last-child td{border-bottom:none;}
+.bk-tbl td:last-child{text-align:right;font-weight:600;color:var(--blue);}
+.bk-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;min-width:50px;}
+.bk-fill{height:100%;background:linear-gradient(90deg,var(--dblue),var(--blue));border-radius:2px;}
+
+/* ── SITE BLOCK ── */
+.site-block{border:1px solid var(--border);border-radius:var(--r2);margin-bottom:10px;overflow:hidden;background:var(--bg2);}
+.site-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;background:var(--bg3);border-bottom:1px solid var(--border);}
+.site-hd-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.site-num{width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.site-nm{font-family:var(--serif);font-size:13px;font-weight:600;}
+.stag{font-family:var(--mono);font-size:9px;color:var(--t3);padding:1px 7px;border:1px solid var(--border2);border-radius:8px;}
+.stag.blue{color:var(--blue);border-color:rgba(26,26,255,0.25);}
+.site-body{padding:14px;display:none;}
+.site-body.open{display:block;}
+.sec-lbl{font-size:9px;font-weight:700;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.09em;margin:12px 0 6px;display:flex;align-items:center;gap:6px;}
+
+/* Role table */
+.rt{width:100%;border-collapse:collapse;font-size:11px;}
+.rt th{text-align:left;padding:4px 7px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:0.06em;}
+.rt td{padding:4px 7px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.rt tr:last-child td{border-bottom:none;}
+.rt input{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:11px;padding:2px 5px;outline:none;width:100%;}
+.rc{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:3px;}
+
+/* Module list */
+/* Module selection: 4-column grid by tier */
+.mod-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;}
+.mod-col{display:flex;flex-direction:column;gap:3px;}
+.mod-col-head{font-size:9px;font-weight:700;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;border-radius:6px;margin-bottom:2px;}
+.mod-col-head.h-core{background:#e8f0fe;color:var(--dblue);}
+.mod-col-head.h-t1{background:rgba(0,170,85,0.10);color:#007a3a;}
+.mod-col-head.h-t2{background:rgba(245,158,11,0.12);color:#b45309;}
+.mod-col-head.h-t3{background:rgba(204,34,0,0.08);color:#a01800;}
+.mod-list-item{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);transition:background .1s;min-height:30px;}
+.mod-list-item:hover{background:var(--bg3);}
+.mod-list-item.is-core{opacity:0.65;}
+.mod-list-item.is-off{background:var(--bg3);opacity:0.75;}
+.mod-list-left{display:flex;align-items:center;gap:6px;}
+.mod-list-name{font-size:11px;font-weight:500;color:var(--text);line-height:1.2;}
+.mod-list-sav{font-family:var(--mono);font-size:9px;color:var(--green);white-space:nowrap;}
+
+/* Module savings table */
+.mod-tbl{width:100%;border-collapse:collapse;}
+.mod-tbl th{text-align:left;padding:5px 9px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:0.07em;}
+.mod-tbl td{padding:5px 9px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.mod-tbl tr:last-child td{border-bottom:none;}
+.ninp{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11px;padding:3px 6px;outline:none;width:70px;}
+.ninp:focus{border-color:rgba(26,26,255,0.5);}
+.rsel{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11px;padding:3px 5px;outline:none;appearance:none;}
+
+/* ── PRICING COMBINED TABLE ── */
+.price-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;}
+.price-tbl th{text-align:right;padding:6px 12px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:0.06em;}
+.price-tbl th:first-child{text-align:left;}
+.price-tbl td{padding:5px 12px;border-bottom:1px solid var(--border);text-align:right;vertical-align:middle;}
+.price-tbl td:first-child{text-align:left;font-weight:500;color:var(--text);}
+.price-tbl tr:last-child td{border-bottom:none;}
+.price-tbl input{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:11px;padding:3px 7px;outline:none;width:100px;text-align:right;}
+.price-tbl input:focus{border-color:rgba(26,26,255,0.5);}
+.price-tbl th.th-core{background:#e8f0fe;color:var(--dblue);}
+.price-tbl th.th-t1{background:rgba(0,170,85,0.10);color:#007a3a;}
+.price-tbl th.th-t2{background:rgba(245,158,11,0.12);color:#b45309;}
+.price-tbl th.th-t3{background:rgba(204,34,0,0.08);color:#a01800;}
+
+/* Site results */
+.srt{width:100%;border-collapse:collapse;}
+.srt th{text-align:right;padding:5px 10px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:0.06em;}
+.srt th:first-child{text-align:left;}
+.srt td{padding:5px 10px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);font-size:11px;color:var(--t2);}
+.srt td:first-child{text-align:left;font-weight:600;color:var(--text);}
+
+.btn{padding:5px 12px;border-radius:8px;font-family:var(--sans);font-size:11px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--t2);transition:all .12s;}
+.btn:hover{background:var(--bg3);color:var(--text);}
+.btn.pri{background:rgba(26,26,255,0.08);border-color:rgba(26,26,255,0.25);color:var(--blue);font-weight:500;}
+.btn-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+
+.info{padding:7px 12px;background:rgba(26,26,255,0.04);border:1px solid rgba(26,26,255,0.12);border-radius:7px;font-size:10px;color:#2a2a6e;font-family:var(--mono);line-height:1.6;}
+.note{font-size:9px;color:var(--t3);padding:6px 14px;background:var(--bg3);border-top:1px solid var(--border);font-family:var(--mono);}
+.divider{height:1px;background:var(--border);margin:8px 0;}
+.pos{color:var(--green)!important;font-weight:600;}
+.neg{color:var(--red)!important;}
+
+@media(max-width:900px){.results-layout{grid-template-columns:1fr;}.yr-timeline{grid-template-columns:1fr 1fr;}.g2,.g3,.g4{grid-template-columns:1fr;}.mod-grid-4{grid-template-columns:1fr 1fr;}}
+
+/* ── REVIEW PANEL ── */
+body.comment-mode{cursor:crosshair!important;}
+body.comment-mode *{cursor:crosshair!important;}
+#review-panel{position:fixed;top:60px;right:0;width:260px;background:#1a1a2e;color:#fff;border-radius:12px 0 0 12px;z-index:9000;box-shadow:-4px 0 24px rgba(0,0,0,0.2);font-family:var(--sans);overflow:hidden;transition:transform .25s;}
+#review-panel.collapsed{transform:translateX(248px);}
+#rp-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#12122a;border-bottom:1px solid rgba(255,255,255,0.08);}
+#rp-title{font-family:var(--serif);font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;}
+#rp-dot{width:8px;height:8px;border-radius:50%;background:#cc2200;flex-shrink:0;}
+#rp-dot.live{background:#00cc66;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+#rp-collapse{background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:14px;padding:0;line-height:1;}
+#rp-collapse:hover{color:#fff;}
+#rp-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
+#rp-name-inp{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:7px;color:#fff;font-family:var(--mono);font-size:11px;padding:6px 9px;outline:none;}
+#rp-name-inp:focus{border-color:rgba(100,100,255,0.6);}
+#rp-name-inp::placeholder{color:rgba(255,255,255,0.3);}
+#rp-toggle-btn{width:100%;padding:7px;border-radius:7px;border:none;background:rgba(255,255,255,0.10);color:#fff;font-family:var(--mono);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s;}
+#rp-toggle-btn:hover{background:rgba(255,255,255,0.18);}
+#rp-toggle-btn.active{background:rgba(26,26,255,0.5);border:1px solid rgba(100,100,255,0.5);}
+.rp-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.rp-btn{padding:6px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.8);font-family:var(--mono);font-size:10px;cursor:pointer;text-align:center;transition:background .15s;}
+.rp-btn:hover{background:rgba(255,255,255,0.14);color:#fff;}
+#rp-list{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-top:2px;}
+#rp-list::-webkit-scrollbar{width:3px;}
+#rp-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:2px;}
+.rp-note-item{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background .12s;}
+.rp-note-item:hover{background:rgba(255,255,255,0.12);}
+.rp-note-author{font-family:var(--mono);font-size:9px;color:rgba(100,180,255,0.9);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;}
+.rp-note-text{font-size:11px;color:rgba(255,255,255,0.85);margin-top:2px;line-height:1.4;word-break:break-word;}
+.rp-note-date{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,0.3);margin-top:4px;}
+.rp-note-del{float:right;background:none;border:none;color:rgba(255,100,100,0.5);cursor:pointer;font-size:11px;padding:0;line-height:1;}
+.rp-note-del:hover{color:#ff6666;}
+#rp-empty{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);text-align:center;padding:12px 0;}
+#rp-backend-tag{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,0.25);text-align:center;padding:6px 0 2px;}
+/* Cursor hint bar */
+#comment-hint{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1aff;color:#fff;font-family:var(--mono);font-size:11px;padding:6px 18px;border-radius:20px;z-index:9100;pointer-events:none;box-shadow:0 4px 16px rgba(26,26,255,0.35);opacity:0;transition:opacity .2s;}
+#comment-hint.show{opacity:1;}
+/* Comment markers on page */
+.cm-marker{position:absolute;z-index:8000;width:24px;height:24px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--mono);transition:transform .15s;}
+.cm-marker:hover{transform:scale(1.2);}
+/* Comment input popup */
+#cm-popup{position:fixed;z-index:9500;background:#fff;border:1px solid var(--border2);border-radius:12px;padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);width:280px;display:none;}
+#cm-popup h4{font-family:var(--serif);font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text);}
+#cm-text-inp{width:100%;height:72px;resize:none;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;font-family:var(--sans);font-size:12px;padding:6px 8px;outline:none;color:var(--text);margin-bottom:10px;}
+#cm-text-inp:focus{border-color:rgba(26,26,255,0.5);}
+.cm-popup-btns{display:flex;gap:6px;justify-content:flex-end;}
+.cm-popup-btns button{font-size:11px;padding:5px 12px;border-radius:7px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--t2);}
+.cm-popup-btns button.pri{background:rgba(26,26,255,0.10);border-color:rgba(26,26,255,0.25);color:var(--blue);font-weight:600;}
+.cm-popup-btns button.pri:hover{background:var(--blue);color:#fff;}
+
+/* HERO */
+.hero-strip{background:var(--bg);border-bottom:1px solid var(--border);padding:28px 0 24px;}
+.hero-in{max-width:1200px;margin:0 auto;padding:0 1.5rem;}
+.hero-tag{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.1em;background:rgba(26,26,255,0.06);border:1px solid rgba(26,26,255,0.15);border-radius:20px;padding:4px 12px;margin-bottom:12px;}
+.hero-tag::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--blue);display:inline-block;}
+.hero-title{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--text);line-height:1.25;margin-bottom:8px;letter-spacing:-0.02em;}
+.hero-title em{font-style:italic;color:var(--blue);}
+.hero-desc{font-size:13px;color:var(--t2);white-space:nowrap;line-height:1.6;}
+
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <svg id="Solvace_Logotype_RGB" height="30" style="display:block;" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 283.4645669 46.2199992">
+  <!-- Generator: Adobe Illustrator 29.8.1, SVG Export Plug-In . SVG Version: 2.1.1 Build 2)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #1a1aff;
+      }
+    </style>
+  </defs>
+  <path d="M103.3714148,22.9088652c-2.0260224-.9396078-4.3119993-1.680659-6.8589723-2.2238663l-3.2575993-.8141257c-1.9212073-.4590592-3.5699065-.9915219-4.9481806-1.5973332-1.3783289-.6050438-2.4431995-1.388032-3.1947212-2.3491291-.7515218-.9601103-1.1278034-2.2129024-1.1278034-3.7583763,0-2.3381103.8772779-4.1440321,2.6307921-5.4183134,1.7546106-1.2734591,4.0719991-1.9104627,6.9533168-1.9104627,2.0045879,0,3.790062.3131295,5.3559836.9396626,1.5658668.626259,2.7969503,1.587356,3.6957175,2.8813176.8971774,1.2949484,1.3468077,3.0067997,1.3468077,5.1363763v2.6310662h5.198761v-2.6310662c0-3.0065804-.6792147-5.5014199-2.0354514-7.4852861-1.3578812-1.9830438-3.2167587-3.4863066-5.5750426-4.5100625-2.3598737-1.0229884-5.0221323-1.5347292-7.9867757-1.5347292-2.9232546,0-5.5026808.4805485-7.7362502,1.4406588-2.2346109.961097-3.9676775,2.3391519-5.198761,4.134329-1.2325637,1.7959994-1.8478039,3.9257953-1.8478039,6.3891684,0,2.4644147.5528556,4.4786509,1.6597179,6.0448465,1.1062593,1.5658668,2.6407145,2.8294035,4.6039136,3.7895138,1.9625961.961097,4.2176548,1.7754969,6.7656693,2.4431995l3.2565577.8141257c1.9625961.4601008,3.6747216.9925635,5.1368697,1.5973332,1.4611065.6058113,2.5993805,1.3887995,3.4137803,2.3491291.8143998.9611519,1.2215997,2.2550586,1.2215997,3.8835842,0,2.3392067-.8987672,4.2811359-2.693725,5.8255134-1.7959446,1.5454739-4.4063438,2.3177174-7.8300465,2.3177174-3.3414185,0-6.0760389-.8867069-8.2058348-2.6622586-2.1297959-1.7745101-3.1947212-4.4787057-3.1947212-8.1117643v-1.3153961h-5.1987062v1.3153961c0,3.424525.7200553,6.2746503,2.1612623,8.5501566,1.4401106,2.2767672,3.4137255,3.9776546,5.9187615,5.1051839,2.5061324,1.1275293,5.345513,1.6914036,8.5192384,1.6914036,3.173232,0,5.9403056-.5324627,8.3001793-1.5973332,2.3582839-1.0649254,4.1862432-2.5574435,5.4806433-4.4787057,1.2939616-1.9204399,1.9422032-4.1754985,1.9422032-6.7651211,0-2.5889099-.6058113-4.6872942-1.8163923-6.2953721-1.2121708-1.6070363-2.8299517-2.8815917-4.8549873-3.8209802ZM137.0143616,15.4233598c-2.3593255-1.2939068-5.0844621-1.9418743-8.1743683-1.9418743-3.0909478,0-5.8155362.6479676-8.1743683,1.9418743-2.3598737,1.2947291-4.1967137,3.1318432-5.5121098,5.5121646-1.3154509,2.3805407-1.9736697,5.1580848-1.9736697,8.3313168v.8141257c0,3.2162105.6582188,6.0037318,1.9736697,8.362564,1.3153961,2.3598737,3.1522361,4.1870106,5.5121098,5.4809174,2.3588321,1.2939068,5.0834206,1.9419292,8.1743683,1.9419292,3.0899062,0,5.8150428-.6480224,8.1743683-1.9419292,2.3593803-1.2939068,4.1972619-3.1210437,5.512658-5.4809174,1.3153961-2.3588321,1.9731215-5.1463535,1.9731215-8.362564v-.8141257c0-3.173232-.6577254-5.9507761-1.9731215-8.3313168-1.3153961-2.3803214-3.1532776-4.2174355-5.512658-5.5121646ZM139.5519056,29.955759c0,3.5077959-.9716224,6.2953172-2.9127841,8.3625092-1.9421484,2.0671919-4.5415289,3.1006508-7.7991282,3.1006508-3.2156623,0-5.8045723-1.0334589-7.7671684-3.1006508-1.9636925-2.0671919-2.9441957-4.8547132-2.9441957-8.3625092v-.563655c0-3.5078507.9805032-6.2953172,2.9441957-8.3625092,1.9625961-2.0671919,4.5515061-3.1006508,7.7671684-3.1006508,3.2575993,0,5.8569798,1.0334589,7.7991282,3.1006508,1.9411617,2.0671919,2.9127841,4.8546584,2.9127841,8.3625092v.563655ZM149.3791942,44.9893737h4.949277V1.141541h-4.949277v43.8478327ZM172.9757932,41.2936562h-.8772779l-9.207882-26.9351669h-5.2615842l10.9618896,30.6308844h7.8929245l10.9613963-30.6308844h-5.2616391l-9.2078272,26.9351669ZM214.574104,38.9133348v-13.8434814c0-3.6742282-1.0865243-6.5243535-3.2571607-8.5503759-2.1721714-2.0249808-5.2206888-3.037992-9.1454425-3.037992-2.5480145,0-4.7291764.4286344-6.5455687,1.2842037-1.8169405.8563368-3.2680698,1.9838661-4.3539363,3.382588-1.0858664,1.3994893-1.8793252,2.9546663-2.3803214,4.6665176l4.6358734,1.5033176c.5009962-2.0043138,1.4401654-3.6016471,2.8184396-4.7918352,1.3783289-1.1901333,3.2984399-1.7851999,5.7625805-1.7851999,2.5061324,0,4.3948865.626259,5.669442,1.8790511,1.2733494,1.2527373,1.9101338,2.965685,1.9101338,5.1365956v2.2550586h-10.3355758c-2.1717329,0-4.1343838.3443218-5.887898,1.0334589-1.7540624.6891371-3.1318432,1.7129477-4.1343838,3.0694585-1.0024858,1.357333-1.5035369,3.079929-1.5035369,5.1678427,0,2.0464701.5010511,3.7798107,1.5035369,5.1989803,1.0025407,1.4202111,2.3803214,2.5055294,4.1343838,3.2573252,1.7535142.7515218,3.6956626,1.1275293,5.8255134,1.1275293s3.862369-.2819372,5.198761-.8455922c1.336392-.5638743,2.3902438-1.2734591,3.1632-2.1297959.7725177-.8555145,1.3882513-1.680659,1.8478587-2.4743918h.7521248v.3131295c0,1.2950032.4166289,2.3284621,1.2529565,3.1009249.8343542.773011,1.9417099,1.1587217,3.3194358,1.1587217h4.3225247v-4.1969878h-2.8189329c-1.1697404,0-1.7540076-.626259-1.7540076-1.8790511ZM209.6881436,31.7097666c0,3.1318432-.908251,5.5650655-2.7245336,7.2973645-1.8165019,1.7333406-4.1873396,2.5996546-7.1095526,2.5996546-2.0889553,0-3.7900072-.4795618-5.1054032-1.4406588-1.3154509-.9601103-1.9731215-2.2962282-1.9731215-4.0091211,0-1.7115772.6361813-2.9958358,1.9101886-3.8521178,1.2735139-.8555693,2.8918978-1.2842585,4.8549873-1.2842585h10.147435v.6891371ZM242.567618,39.0385976c-1.6079682,1.5874109-3.9369237,2.3803214-6.984235,2.3803214-2.0465249,0-3.8739908-.4591141-5.4813011-1.3780548-1.6077489-.9181733-2.8813176-2.2335694-3.8209254-3.9464623-.9396078-1.7116321-1.4091924-3.7583763-1.4091924-6.1386429v-.563655c0-2.3803214.4695846-4.426024,1.4091924-6.1389169.9396078-1.7115772,2.2131765-3.0272474,3.8209254-3.9461882,1.6073104-.9181733,3.4347762-1.3780548,5.4813011-1.3780548,2.0044235,0,3.6957175.3757335,5.0734434,1.1275293,1.3782741.7517959,2.4526284,1.7537883,3.2261329,3.0065804.772408,1.2530114,1.2629337,2.6310662,1.4721253,4.134329l4.8230275-1.0022666c-.3343995-2.0454285-1.0959532-3.96691-2.2859769-5.7629094-1.1906815-1.794903-2.8190426-3.2355618-4.886399-4.3219765-2.0669178-1.0855923-4.5625248-1.6287448-7.4852861-1.6287448-2.9657398,0-5.6279984.6372229-7.9862275,1.9104627-2.3598737,1.2742814-4.218806,3.0909478-5.5750426,5.4497799-1.357333,2.3595996-2.0359996,5.1892772-2.0359996,8.4877719v.688863c0,3.2573252.6786665,6.0760389,2.0359996,8.4563055,1.3562367,2.3803214,3.2151689,4.2077324,5.5750426,5.4812463,2.3582291,1.273185,5.0204877,1.9104627,7.9862275,1.9104627,2.9227613,0,5.4183683-.5432073,7.4852861-1.6287997,2.0673564-1.0853182,3.7061332-2.5259771,4.9177558-4.3219765,1.2106358-1.7951771,2.0454285-3.6957175,2.505036-5.7002506l-4.8853026-1.0649254c-.3762817,2.3392067-1.3689548,4.3015288-2.9756073,5.8881721ZM283.4645669,28.7029669c0-3.0899062-.626259-5.7833571-1.8792155-8.080572-1.252518-2.2962282-2.9861327-4.0607611-5.198761-5.2931055-2.2137247-1.231248-4.7606428-1.8478039-7.6419605-1.8478039-2.9661784,0-5.5970801.6576706-7.8929245,1.9730667-2.2969408,1.3153961-4.0930499,3.1635289-5.3869018,5.5438503-1.2949484,2.3803214-1.9421484,5.1578656-1.9421484,8.3310975v.7514669c0,3.1321173.6472001,5.8881721,1.9421484,8.2684936,1.293852,2.3802666,3.1103539,4.2281253,5.4491769,5.5437955,2.3383844,1.3153961,5.0530505,1.9731215,8.1435597,1.9731215,2.7561097,0,5.0210359-.4386664,6.7965327-1.3153961,1.7746198-.8770586,3.2152786-1.9623769,4.3219765-3.2573252,1.106369-1.2939068,1.9731763-2.5889099,2.5999835-3.8835842l-4.2597014-2.0671919c-.7514669,1.6707366-1.8384298,3.1113955-3.2575993,4.3219765-1.4201563,1.2118967-3.4450823,1.8166664-6.0759841,1.8166664-3.0065256,0-5.5121098-.9289179-7.5166429-2.7875213-2.0046428-1.8575618-3.0694585-4.4367139-3.1946664-7.7359761h24.9931281v-2.2550586ZM258.5337139,26.8865198c.4171771-2.8393807,1.5239846-5.0525023,3.3205322-6.6399132,1.794903-1.5865886,4.0919535-2.3802666,6.8903839-2.3802666,2.7555615,0,5.0205973.793678,6.7960942,2.3802666,1.7745101,1.5874109,2.7455843,3.8005325,2.9127841,6.6399132h-19.9197944Z"/>
+  <path class="st0" d="M63.8672641,4.7088646c0-2.5898755-2.1189891-4.7088646-4.7088646-4.7088646h-28.1929003c-2.5898755,0-4.7088646,2.1189891-4.7088646,4.7088646v10.6107625c0,2.5898755-2.1189891,4.7088646-4.7088646,4.7088646H4.7088646C2.1189891,20.0284916,0,22.1474807,0,24.7373562v16.7737784C0,44.1010102,2.1189891,46.2199992,4.7088646,46.2199992h28.1929003c2.5898755,0,4.7088646-2.1189891,4.7088646-4.7088646v-10.6110245c0-2.5898755,2.1189891-4.7088646,4.7088646-4.7088646h16.8389054c2.5898755,0,4.7088646-2.1189891,4.7088646-4.7088646V4.7088646Z"/>
+</svg>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="nav-tag" id="save-status" style="color:var(--green);display:none;">✓ Saved</span>
+      <button class="btn" onclick="downloadHTML()" title="Download a copy of this file with your current data saved inside" style="font-size:11px;padding:5px 12px;">⬇ Download</button>
+      <label class="btn" title="Load a previously saved file" style="font-size:11px;padding:5px 12px;cursor:pointer;">
+        📂 Load saved file
+        <input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event)">
+      </label>
+    </div>
+  </div>
+</nav>
+
+<div class="hero-strip">
+  <div class="hero-in">
+    <div class="hero-tag">ROI CALCULATOR</div>
+    <h1 class="hero-title">What could your operations <em>save with Solvace</em>?</h1>
+    <p class="hero-desc">Configure your sites, select modules and adjust assumptions below — results update in real time as you scroll and edit.</p>
+  </div>
+</div>
+
+<div class="sec-nav">
+  <div class="sec-nav-in">
+    <div class="sec-nav-btn active" onclick="scrollTo('s-results')">Results</div>
+    <div class="sec-nav-btn" onclick="scrollTo('s-sites')">Sites Configuration</div>
+    <div class="sec-nav-btn" onclick="scrollTo('s-savings')">Module Savings Config.</div>
+    <div class="sec-nav-btn" onclick="scrollTo('s-costs')">Costs &amp; Licensing</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ══════════════ RESULTS ══════════════ -->
+<div id="s-results" class="section">
+  <div class="section-title">Results</div>
+  <div class="section-sub">5-year financial model — auto-updates as you edit any section below</div>
+</div>
+
+<div class="results-layout">
+  <!-- Left: KPI cards stacked -->
+  <div class="kpi-stack">
+    <!-- Hero: net benefit first and largest -->
+    <div class="kpi-card kc-hero-green" id="kc-net-card">
+      <div class="kpi-lbl" style="letter-spacing:0.12em;">5-yr net benefit</div>
+      <div class="kpi-val-hero green" id="k-net">—</div>
+      <div class="kpi-sub">savings minus total cost</div>
+    </div>
+    <!-- Divider -->
+    <div class="kpi-divider"></div>
+    <!-- Supporting: savings and cost -->
+    <div class="kpi-card kc-green"><div class="kpi-lbl">5-yr savings</div><div class="kpi-val green" id="k-sav">—</div><div class="kpi-sub">value delivered</div></div>
+    <div class="kpi-card kc-red"><div class="kpi-lbl">5-yr total cost</div><div class="kpi-val red" id="k-tco">—</div><div class="kpi-sub">license + implementation</div></div>
+    <!-- Divider -->
+    <div class="kpi-divider"></div>
+    <!-- Metrics -->
+    <div class="kpi-card kc-blue"><div class="kpi-lbl">Time to ROI</div><div class="kpi-val blue" id="k-pb">—</div><div class="kpi-sub">payback period</div></div>
+    <div class="kpi-card kc-blue"><div class="kpi-lbl">5-yr ROI</div><div class="kpi-val blue" id="k-roi">—</div><div class="kpi-sub">net / total cost</div></div>
+  </div>
+  <!-- Right: Year cards -->
+  <div class="yr-timeline" id="yr-timeline"></div>
+</div>
+
+<div class="g2">
+  <div class="card">
+    <div class="card-head"><div class="card-hl">
+      <div class="card-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);">📦</div>
+      <div><div class="card-title">Savings by module</div><div class="card-sub">5-year cumulative — enabled modules only</div></div>
+    </div></div>
+    <table class="bk-tbl" id="bk-tbl"></table>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-hl">
+      <div class="card-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);">🏭</div>
+      <div><div class="card-title">Per-site summary</div><div class="card-sub">5-year view</div></div>
+    </div></div>
+    <div style="overflow-x:auto;"><table class="srt" id="srt"></table></div>
+  </div>
+</div>
+
+<!-- ══════════════ SITES ══════════════ -->
+<div id="s-sites" class="section">
+  <div class="section-title">Sites Configuration</div>
+  <div class="section-sub">Workforce, deployment year and module selection per site</div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div class="card-hl">
+      <div class="card-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);">🏭</div>
+      <div><div class="card-title">Sites</div><div class="card-sub">Each site has its own workforce rates and module selection</div></div>
+    </div>
+    <div class="card-hr"><button class="btn pri" onclick="addSite()">+ Add site</button></div>
+  </div>
+  <div style="padding:10px 14px;" id="sites-wrap"></div>
+</div>
+
+<!-- ══════════════ MODULE SAVINGS ══════════════ -->
+<div id="s-savings" class="section">
+  <div class="section-title">Module Savings Configuration</div>
+  <div class="section-sub">Minutes saved and interaction volume per module — multiple roles where relevant</div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div class="card-hl">
+      <div class="card-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);">⚙️</div>
+      <div><div class="card-title">Module savings</div><div class="card-sub">Each module can involve multiple roles. Interactions are per 100 FTE and scale with each site's actual headcount. Hourly rates are configured per site — see Sites Configuration.</div></div>
+    </div>
+    <div class="card-hr">
+      <button class="btn" onclick="restoreAllMods()" title="Re-add any deleted modules and reset all values to defaults">Restore all modules</button>
+      <button class="btn" onclick="resetMods()" title="Reset values to defaults without restoring deleted modules">Reset values</button>
+    </div>
+  </div>
+  <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;background:var(--bg3);">
+    <div>
+      <div class="lbl">Value recapture rate</div>
+      <div style="font-size:10px;color:var(--t3);font-family:var(--mono);margin-top:1px;">% of saved time effectively repurposed to value-added work</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <input class="finp" type="number" id="recapture-rate" value="40" min="1" max="100" style="width:70px;text-align:right;" oninput="recalc()">
+      <span class="funit" style="font-size:13px;font-weight:600;color:var(--blue);">%</span>
+    </div>
+    <div style="font-size:10px;color:var(--t2);font-family:var(--mono);max-width:400px;line-height:1.5;">
+      Example: 100 min saved × 30% = 30 min of actual value-added time recovered. Applied globally to all modules.
+    </div>
+  </div>
+  <div style="overflow-x:auto;"><table class="mod-tbl" id="mod-tbl"></table></div>
+
+</div>
+
+<!-- ══════════════ COSTS ══════════════ -->
+<div id="s-costs" class="section">
+  <div class="section-title">Costs &amp; Licensing</div>
+  <div class="section-sub">Annual license fees by FTE range, plus one-time costs</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><div class="card-hl">
+    <div class="card-icon" style="background:rgba(26,26,255,0.08);color:var(--blue);">💳</div>
+    <div>
+      <div class="card-title">License fees — annual cost per site by FTE range</div>
+      <div class="card-sub">Core = bundle of 5 modules always included · T1/T2/T3 = fee per module selected · fees are flat annual amounts per site</div>
+    </div>
+  </div></div>
+  <div style="overflow-x:auto;">
+    <table class="price-tbl" id="price-tbl">
+      <thead>
+        <tr>
+          <th>FTE range</th>
+          <th class="th-core">Core bundle (€/site/yr)</th>
+          <th class="th-t1">T1 per module (€/site/yr)</th>
+          <th class="th-t2">T2 per module (€/site/yr)</th>
+          <th class="th-t3">T3 per module (€/site/yr)</th>
+        </tr>
+      </thead>
+      <tbody id="price-tbody"></tbody>
+    </table>
+  </div>
+  <div class="note">Core includes: Digital Obeya · Action Plans · RCA · Scorecard · Control Tower &nbsp;|&nbsp; T1: Project · Training · OPL · Defect Tag · CIL · Checklist · Work Permit · Communication · Assessment &nbsp;|&nbsp; T2: Kaizen · BOS · MOC · Alert · Centerline · Documentation &nbsp;|&nbsp; T3: Non-Conformities · Complaints · Unsafe Conditions · Incidents · Replication Matrix · Quiz · Survey</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><div class="card-hl">
+    <div class="card-icon" style="background:rgba(245,158,11,0.10);color:#b45309;">🔧</div>
+    <div><div class="card-title">One-time costs</div><div class="card-sub">Charged in deployment year, per site</div></div>
+  </div></div>
+  <div class="g4" style="border-top:1px solid var(--border);">
+    <div class="gi"><div class="lbl">Implementation fee (€/site)</div><div style="display:flex;gap:4px;align-items:center;margin-top:3px;"><input class="finp" type="number" id="c-impl" value="12500" min="0" oninput="recalc()"><span class="funit">€</span></div></div>
+    <div class="gi"><div class="lbl">Hardware / infrastructure (€/site)</div><div style="display:flex;gap:4px;align-items:center;margin-top:3px;"><input class="finp" type="number" id="c-hw" value="3000" min="0" oninput="recalc()"><span class="funit">€</span></div></div>
+    <div class="gi"><div class="lbl">Other one-time (€/site)</div><div style="display:flex;gap:4px;align-items:center;margin-top:3px;"><input class="finp" type="number" id="c-other" value="0" min="0" oninput="recalc()"><span class="funit">€</span></div></div>
+    <div class="gi" style="border-right:none;"><div class="lbl">Annual license increase</div><div style="display:flex;gap:4px;align-items:center;margin-top:3px;"><input class="finp" type="number" id="c-esc" value="3" min="0" max="20" step="0.5" oninput="recalc()"><span class="funit">%/yr</span></div><div style="font-size:9px;color:var(--t3);font-family:var(--mono);margin-top:3px;">Applied annually to all license fees</div></div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+const MOD_DEFS = [
+  {id:'obeya',       label:'Digital Obeya',        desc:'Meeting prep & reporting',        tier:'core', roles:[{role:'manager',mins:35,interactions:250},{role:'supervisor',mins:20,interactions:62}]},
+  {id:'action',      label:'Action Plans',          desc:'NVAA tracking & status updates',  tier:'core', roles:[{role:'supervisor',mins:15,interactions:150},{role:'operator',mins:8,interactions:17}]},
+  {id:'rca',         label:'Root Cause Analysis',   desc:'Investigation & report time',     tier:'core', roles:[{role:'engineer',mins:60,interactions:50},{role:'supervisor',mins:30,interactions:25}]},
+  {id:'scorecard',   label:'Scorecard',             desc:'Report compilation time',         tier:'core', roles:[{role:'manager',mins:45,interactions:130}]},
+  {id:'tower',       label:'Control Tower',         desc:'Benchmark & knowledge search',    tier:'core', roles:[{role:'manager',mins:25,interactions:160}]},
+  {id:'checklist',   label:'Checklist',             desc:'Paper form & transcription',      tier:'t1',   roles:[{role:'operator',mins:12,interactions:34},{role:'supervisor',mins:5,interactions:62}]},
+  {id:'opl',         label:'OPL',     desc:'Creation, approval & search',     tier:'t1',   roles:[{role:'engineer',mins:25,interactions:75},{role:'operator',mins:5,interactions:9}]},
+  {id:'kaizen',      label:'Kaizen Idea',           desc:'Submission & approval time',      tier:'t2',   roles:[{role:'operator',mins:20,interactions:6},{role:'supervisor',mins:10,interactions:25}]},
+  {id:'project',     label:'Project',          desc:'PMO reporting & tracking',        tier:'t1',   roles:[{role:'manager',mins:40,interactions:60},{role:'engineer',mins:20,interactions:30}]},
+  {id:'moc',         label:'MOC',         desc:'Approval cycle & doc search',     tier:'t2',   roles:[{role:'engineer',mins:55,interactions:20},{role:'manager',mins:20,interactions:40}]},
+  {id:'replication', label:'Replication Matrix',    desc:'Best-practice search & sharing',  tier:'t3',   roles:[{role:'manager',mins:30,interactions:30}]},
+  {id:'defect',      label:'Defect Tag',            desc:'Tag registration & follow-up',    tier:'t1',   roles:[{role:'operator',mins:10,interactions:26},{role:'supervisor',mins:5,interactions:50}]},
+  {id:'cil',         label:'CIL',                   desc:'Paper form & compliance tracking',tier:'t1',   roles:[{role:'operator',mins:18,interactions:17}]},
+  {id:'centerline',  label:'Centerline',            desc:'Parameter check & deviation log', tier:'t2',   roles:[{role:'operator',mins:15,interactions:9},{role:'supervisor',mins:8,interactions:38}]},
+  {id:'assessment',  label:'Assessment',    desc:'Audit prep & reporting time',     tier:'t1',   roles:[{role:'supervisor',mins:35,interactions:22},{role:'manager',mins:15,interactions:30}]},
+  {id:'bos',         label:'BOS',  desc:'Observation log & RPF report',    tier:'t2',   roles:[{role:'supervisor',mins:15,interactions:60},{role:'manager',mins:10,interactions:60}]},
+  {id:'unsafe',      label:'Unsafe Conditions',     desc:'Condition log & follow-up',       tier:'t3',   roles:[{role:'operator',mins:8,interactions:7},{role:'supervisor',mins:5,interactions:30}]},
+  {id:'incidents',   label:'Incidents',             desc:'Registration & investigation',    tier:'t3',   roles:[{role:'supervisor',mins:55,interactions:10},{role:'engineer',mins:30,interactions:10}]},
+  {id:'workpermit',  label:'Work Permit',           desc:'Permit request & approval time',  tier:'t1',   roles:[{role:'supervisor',mins:20,interactions:30},{role:'operator',mins:8,interactions:3}]},
+  {id:'alerts',      label:'Alert',         desc:'Alert log & escalation time',     tier:'t2',   roles:[{role:'operator',mins:8,interactions:14},{role:'supervisor',mins:5,interactions:60}]},
+  {id:'nonconf',     label:'Non-Conformities',      desc:'NC registration & RCA report',    tier:'t3',   roles:[{role:'engineer',mins:50,interactions:60},{role:'supervisor',mins:15,interactions:15}]},
+  {id:'complaints',  label:'Complaints',            desc:'Complaint log & investigation',   tier:'t3',   roles:[{role:'engineer',mins:60,interactions:20},{role:'manager',mins:15,interactions:20}]},
+  {id:'docs',        label:'Documentation',   desc:'Document search & version time',  tier:'t2',   roles:[{role:'engineer',mins:20,interactions:150},{role:'operator',mins:5,interactions:11}]},
+  {id:'training',    label:'Training',desc:'Curriculum mgmt & tracking',    tier:'t1',   roles:[{role:'manager',mins:30,interactions:100},{role:'supervisor',mins:15,interactions:25}]},
+  {id:'communication',label:'Communication',        desc:'Broadcast prep & tracking',       tier:'t1',   roles:[{role:'manager',mins:30,interactions:60},{role:'operator',mins:3,interactions:7}]},
+  {id:'quiz',        label:'Quiz',                  desc:'Assessment creation & grading',   tier:'t3',   roles:[{role:'supervisor',mins:10,interactions:50}]},
+  {id:'survey',      label:'Survey',                desc:'Survey creation & analysis',      tier:'t3',   roles:[{role:'manager',mins:30,interactions:40}]},
+];
+
+const ROLE_DEFS = [
+  {id:'operator',  label:'Operator',  color:'#3B8FFF'},
+  {id:'supervisor',label:'Supervisor',color:'#00C9A7'},
+  {id:'engineer',  label:'Engineer',  color:'#F59E0B'},
+  {id:'manager',   label:'Manager',   color:'#9B6DFF'},
+  {id:'director',  label:'Director',  color:'#E8593C'},
+];
+const BADGE_CLS = {core:'badge-core',t1:'badge-t1',t2:'badge-t2',t3:'badge-t3',custom:'badge-custom'};
+const RAMPS = [0.4, 0.75, 0.95, 1.0, 1.0];
+
+const FTE_BANDS = [
+  {label:'1–50',    from:1,   to:50},
+  {label:'51–100',  from:51,  to:100},
+  {label:'101–200', from:101, to:200},
+  {label:'201–300', from:201, to:300},
+  {label:'301–400', from:301, to:400},
+  {label:'401–500', from:401, to:500},
+  {label:'501–600', from:501, to:600},
+  {label:'601–750', from:601, to:750},
+  {label:'751–1000',from:751, to:1000},
+  {label:'1001–1500',from:1001,to:1500},
+];
+
+// Pricing: annual fees per band
+let coreFees = [570,1140,1770,2400,2900,3350,3750,4370,5200,6550].map(m=>m*12);
+let t1Fees   = [77,92,152,199,245,275,305,366,428,488].map(m=>m*12);
+let t2Fees   = [56,67,112,145,180,201,224,269,313,358].map(m=>m*12);
+let t3Fees   = [38,46,77,100,122,137,152,183,214,245].map(m=>m*12);
+
+let mods = MOD_DEFS.map(m=>({...m,roles:m.roles.map(r=>({...r}))}));
+const MOD_DEFAULTS = MOD_DEFS.map(m=>({roles:m.roles.map(r=>({...r}))}));
+// Custom savings rows added by user
+let customMods = [];
+let customModIdCounter = 1;
+
+let sites = [];
+
+function rolesForFte(fte){
+  // Manufacturing industry standard ratios
+  // Operators ~70%, Supervisors ~8%, Engineers ~4%, Managers ~2%, Directors always 1
+  return [
+    {id:'operator',  label:'Operator',  color:'#3B8FFF',headcount:Math.max(1,Math.round(fte*0.70)), annual_cost:42000, working_hrs:3520},
+    {id:'supervisor',label:'Supervisor',color:'#00C9A7',headcount:Math.max(1,Math.round(fte*0.08)), annual_cost:58000, working_hrs:1760},
+    {id:'engineer',  label:'Engineer',  color:'#F59E0B',headcount:Math.max(1,Math.round(fte*0.04)), annual_cost:72000, working_hrs:1760},
+    {id:'manager',   label:'Manager',   color:'#9B6DFF',headcount:Math.max(1,Math.round(fte*0.02)), annual_cost:95000, working_hrs:1760},
+    {id:'director',  label:'Director',  color:'#E8593C',headcount:1,                                annual_cost:140000,working_hrs:1760},
+  ];
+}
+function defRoles(){ return rolesForFte(100); }
+function allModIds(){return mods.map(m=>m.id);}
+function coreModIds(){return mods.filter(m=>m.tier==="core").map(m=>m.id);}
+
+// ══ INIT ══
+
+// ══════════════════════════════════════════════
+// STATE PERSISTENCE
+// ══════════════════════════════════════════════
+const STORAGE_KEY = 'solvace_roi_v1';
+
+function getState(){
+  return {
+    sites: sites.map(function(s){ return {
+      name:s.name, fte:s.fte, deployYear:s.deployYear,
+      open:s.open, moduleIds:s.moduleIds.slice(),
+      roles:s.roles.map(function(r){ return Object.assign({},r); })
+    }; }),
+    mods: mods.map(function(m){ return Object.assign({},m,{roles:m.roles.map(function(r){ return Object.assign({},r); })}); }),
+    customMods: customMods.map(function(m){ return Object.assign({},m,{roles:m.roles.map(function(r){ return Object.assign({},r); })}); }),
+    customModIdCounter: customModIdCounter,
+    coreFees: coreFees.slice(),
+    t1Fees: t1Fees.slice(), t2Fees: t2Fees.slice(), t3Fees: t3Fees.slice(),
+    cImpl: gv('c-impl'), cHw: gv('c-hw'), cOther: gv('c-other'), cEsc: gv('c-esc'),
+    recaptureRate: gv('recapture-rate')
+  };
+}
+
+function applyState(state){
+  if(!state) return;
+  if(state.sites && state.sites.length){
+    sites = state.sites.map(function(s){ return {
+      name:s.name, fte:s.fte, deployYear:s.deployYear||1,
+      open:s.open!==undefined?s.open:true,
+      moduleIds:(s.moduleIds||coreModIds()).slice(),
+      roles:(s.roles||[]).map(function(r){ return Object.assign({},r); })
+    }; });
+  }
+  if(state.mods && state.mods.length){
+    mods = state.mods.map(function(m){ return Object.assign({},m,{roles:m.roles.map(function(r){ return Object.assign({},r); })}); });
+  }
+  if(state.customMods){
+    customMods = state.customMods.map(function(m){ return Object.assign({},m,{roles:m.roles.map(function(r){ return Object.assign({},r); })}); });
+    customModIdCounter = state.customModIdCounter || customMods.length + 1;
+  }
+  if(state.coreFees) coreFees = state.coreFees.slice();
+  if(state.t1Fees)   t1Fees   = state.t1Fees.slice();
+  if(state.t2Fees)   t2Fees   = state.t2Fees.slice();
+  if(state.t3Fees)   t3Fees   = state.t3Fees.slice();
+  renderPricingTable();
+  renderModTable();
+  renderSites();
+  setTimeout(function(){
+    var fields = {
+      'c-impl': state.cImpl, 'c-hw': state.cHw,
+      'c-other': state.cOther, 'c-esc': state.cEsc,
+      'recapture-rate': state.recaptureRate
+    };
+    Object.keys(fields).forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && fields[id] !== undefined) el.value = fields[id];
+    });
+    recalc();
+  }, 50);
+}
+
+function showSaveFlash(){
+  var el = document.getElementById('save-status');
+  if(!el) return;
+  el.style.display = 'inline';
+  el.className = 'nav-tag save-flash';
+  setTimeout(function(){ el.style.display='none'; el.className='nav-tag'; }, 2500);
+}
+
+function saveToStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(getState()));
+    showSaveFlash();
+  }catch(e){ console.warn('localStorage save failed:', e); }
+}
+
+function downloadHTML(){
+  var state = getState();
+  // Encode state as base64 to avoid any HTML/script injection issues
+  var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  var doc = document.documentElement.outerHTML;
+  // Remove any previous saved state script tags
+  doc = doc.replace(/<script id="saved-state"[\s\S]*?<\/script>/g, '');
+  // Inject encoded state before </head>
+  var inject = '<script id="saved-state">window.__SAVED_STATE_B64__="' + encoded + '";<' + '/script>';
+  doc = doc.replace('</head>', inject + '</head>');
+  var blob = new Blob([doc], {type:'text/html'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Solvace_ROI_Calculator_saved.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function loadFromFile(event){
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var txt = e.target.result;
+    // Look for base64-encoded state
+    var match = txt.match(/window\.__SAVED_STATE_B64__="([^"]+)"/);
+    if(match){
+      try{
+        var json = decodeURIComponent(escape(atob(match[1])));
+        applyState(JSON.parse(json));
+        saveToStorage();
+      }catch(err){ alert('Could not load file: ' + err.message); }
+    } else {
+      alert('No saved data found in this file.\nMake sure it was saved using the Download button.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function init(){
+  // Check for base64 state injected via Download button
+  if(window.__SAVED_STATE_B64__){
+    try{
+      var json = decodeURIComponent(escape(atob(window.__SAVED_STATE_B64__)));
+      applyState(JSON.parse(json));
+      return;
+    }catch(e){ console.warn('Failed to load injected state:', e); }
+  }
+  // Check localStorage for auto-saved state
+  try{
+    var stored = localStorage.getItem(STORAGE_KEY);
+    if(stored){ applyState(JSON.parse(stored)); return; }
+  }catch(e){ console.warn('Failed to load localStorage state:', e); }
+  // Fresh start
+  renderPricingTable();
+  addSite();
+  renderModTable();
+  recalc();
+}
+
+// ══ SCROLL NAV ══
+function scrollTo(id){
+  document.getElementById(id).scrollIntoView({behavior:"smooth",block:"start"});
+}
+// Highlight active section on scroll
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const id=e.target.id;
+      const map={'s-results':0,'s-sites':1,'s-savings':2,'s-costs':3};
+      document.querySelectorAll('.sec-nav-btn').forEach((b,i)=>b.classList.toggle('active',i===map[id]));
+    }
+  });
+},{threshold:0.15,rootMargin:'-100px 0px 0px 0px'});
+['s-results','s-sites','s-savings','s-costs'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)observer.observe(el);
+});
+
+// ══ PRICING TABLE ══
+function renderPricingTable(){
+  document.getElementById("price-tbody").innerHTML = FTE_BANDS.map((b,bi)=>`
+    <tr>
+      <td>${b.label} FTE</td>
+      <td><input type="number" value="${coreFees[bi]}" min="0" onchange="coreFees[${bi}]=+this.value;recalc();"></td>
+      <td><input type="number" value="${t1Fees[bi]}"   min="0" onchange="t1Fees[${bi}]=+this.value;recalc();"></td>
+      <td><input type="number" value="${t2Fees[bi]}"   min="0" onchange="t2Fees[${bi}]=+this.value;recalc();"></td>
+      <td><input type="number" value="${t3Fees[bi]}"   min="0" onchange="t3Fees[${bi}]=+this.value;recalc();"></td>
+    </tr>
+  `).join("");
+}
+
+function getBandIdx(fte){const i=FTE_BANDS.findIndex(b=>fte>=b.from&&fte<=b.to);return i>=0?i:FTE_BANDS.length-1;}
+function getCoreFee(fte){return coreFees[getBandIdx(fte)];}
+function getTierFee(tier,fte){const bi=getBandIdx(fte);return tier==="t1"?t1Fees[bi]:tier==="t2"?t2Fees[bi]:t3Fees[bi];}
+function getSiteLicense(site){
+  const core=getCoreFee(site.fte);
+  const mf=mods.filter(m=>m.tier!=="core"&&site.moduleIds.includes(m.id)).reduce((s,m)=>s+getTierFee(m.tier,site.fte),0);
+  return core+mf;
+}
+
+// ══ SITES ══
+function updateSiteFte(si, newFte){
+  if(newFte<=0)return;
+  const site=sites[si];
+  const newRoles=rolesForFte(newFte);
+  // Preserve user-edited annual_cost and working_hrs, only update headcount
+  site.roles.forEach((r,i)=>{ r.headcount=newRoles[i].headcount; });
+  site.fte=newFte;
+  renderSites();recalc();
+}
+
+function addSite(){
+  const n=sites.length+1;
+  sites.push({name:"Site "+n,fte:100,deployYear:1,open:true,moduleIds:coreModIds(),roles:defRoles()});
+  renderSites();recalc();
+}
+function removeSite(i){sites.splice(i,1);renderSites();recalc();}
+function toggleSite(i){
+  sites[i].open=!sites[i].open;
+  document.getElementById("sb-"+i)?.classList.toggle("open",sites[i].open);
+}
+function toggleMod(si,modId,checked){
+  if(mods.find(m=>m.id===modId)?.tier==="core")return;
+  if(checked){if(!sites[si].moduleIds.includes(modId))sites[si].moduleIds.push(modId);}
+  else{sites[si].moduleIds=sites[si].moduleIds.filter(x=>x!==modId);}
+  ss("smod-cnt-"+si,sites[si].moduleIds.length+" modules");
+  updSiteLicBadge(si);
+  recalc();
+}
+
+function renderSites(){
+  const wrap=document.getElementById("sites-wrap");
+  wrap.innerHTML="";
+  sites.forEach((site,si)=>{
+    // Build 4 columns: core, t1, t2, t3
+    const buildCol=(tier,headCls,label)=>{
+      const tierMods=mods.filter(m=>m.tier===tier);
+      const isCore=tier==="core";
+      const rows=tierMods.map(m=>{
+        const on=isCore||site.moduleIds.includes(m.id);
+        const sav=calcModSavings(site,m); // show savings even when off
+        const coreCount=mods.filter(x=>x.tier==="core").length;
+        const modFee=m.tier==="core"?getCoreFee(site.fte)/coreCount:getTierFee(m.tier,site.fte);
+        const netMod=sav-modFee;
+        return `<div class="mod-list-item${isCore?" is-core":""}${!isCore&&!on?" is-off":""}">
+          <div class="mod-list-left">
+            <label class="tog">
+              <input type="checkbox" ${on?"checked":""} ${isCore?"disabled":""}
+                onchange="toggleMod(${si},'${m.id}',this.checked)">
+              <div class="tog-t"></div><div class="tog-k"></div>
+            </label>
+            <span class="mod-list-name">${m.label}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+            <span class="mod-list-sav" style="color:${on?"var(--green)":"var(--t3)"};">~${fmtE(sav)}/yr</span>
+            <span style="font-family:var(--mono);font-size:8px;color:${netMod>=0?"var(--green)":"var(--red)"};">${netMod>=0?"+":"-"}€${Math.abs(Math.round(netMod)).toLocaleString("de-DE")} net</span>
+          </div>
+        </div>`;
+      }).join("");
+      return `<div class="mod-col">
+        <div class="mod-col-head ${headCls}">${label}</div>
+        ${rows}
+      </div>`;
+    };
+    const modListHtml=`<div class="mod-grid-4">
+      ${buildCol("core","h-core","Core (always on"+")")}
+      ${buildCol("t1","h-t1","Tier 1")}
+      ${buildCol("t2","h-t2","Tier 2")}
+      ${buildCol("t3","h-t3","Tier 3")}
+    </div>`;
+
+    const div=document.createElement("div");
+    div.className="site-block";
+    div.innerHTML=`
+      <div class="site-hd" onclick="toggleSite(${si})">
+        <div class="site-hd-left">
+          <div class="site-num">${si+1}</div>
+          <span class="site-nm" id="snm-${si}">${site.name}</span>
+          <span class="stag">${site.fte} FTEs</span>
+          <span class="stag">Deploy Yr ${site.deployYear}</span>
+          <span class="stag blue" id="smod-cnt-${si}">${site.moduleIds.length} modules</span>
+          <span class="stag blue" id="slic-${si}"></span>
+        </div>
+        <button class="btn" onclick="event.stopPropagation();removeSite(${si})">&#10005; Remove</button>
+      </div>
+      <div class="site-body ${site.open?"open":""}" id="sb-${si}">
+        <div class="g3" style="margin-bottom:10px;">
+          <div><div class="lbl">Site name</div><input class="finp" type="text" value="${site.name}" onchange="sites[${si}].name=this.value;ss('snm-${si}',this.value);recalc();"></div>
+          <div><div class="lbl">Total FTEs</div><input class="finp" type="number" value="${site.fte}" min="1" onchange="updateSiteFte(${si},+this.value);"></div>
+          <div><div class="lbl">Deployment year</div>
+            <select class="fsel" onchange="sites[${si}].deployYear=+this.value;renderSites();recalc();">
+              ${[1,2,3,4,5].map(y=>`<option value="${y}" ${site.deployYear===y?"selected":""}>${y===1?"Year 1":"Year "+y}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="sec-lbl">Workforce &amp; hourly rates</div>
+        <table class="rt">
+          <thead><tr><th>Role</th><th>Headcount</th><th>Annual cost (€)</th><th>Working hrs/yr</th><th>&#8594; €/hr</th></tr></thead>
+          <tbody>${site.roles.map((r,ri)=>`
+            <tr>
+              <td><span class="rc" style="background:${r.color}"></span>${r.label}</td>
+              <td><input type="number" value="${r.headcount}" min="0" style="width:55px;" onchange="sites[${si}].roles[${ri}].headcount=+this.value;recalc();"></td>
+              <td><input type="number" value="${r.annual_cost}" min="0" onchange="sites[${si}].roles[${ri}].annual_cost=+this.value;updHr(${si},${ri});recalc();"></td>
+              <td><input type="number" value="${r.working_hrs}" min="500" max="6000" style="width:65px;" onchange="sites[${si}].roles[${ri}].working_hrs=+this.value;updHr(${si},${ri});recalc();"></td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--blue);font-weight:600;" id="shr-${si}-${ri}">${fmt2(r.annual_cost/r.working_hrs)} €/hr</td>
+            </tr>
+          `).join("")}</tbody>
+        </table>
+        <div class="sec-lbl" style="margin-top:14px;">Module selection
+          <button class="btn" style="font-size:9px;padding:2px 8px;" onclick="sites[${si}].moduleIds=allModIds();renderSites();recalc();">All</button>
+          <button class="btn" style="font-size:9px;padding:2px 8px;" onclick="sites[${si}].moduleIds=coreModIds();renderSites();recalc();">Core only</button>
+        </div>
+        ${modListHtml}
+      </div>
+    `;
+    wrap.appendChild(div);
+    updSiteLicBadge(si);
+  });
+}
+
+function updHr(si,ri){const r=sites[si].roles[ri];const el=document.getElementById(`shr-${si}-${ri}`);if(el)el.textContent=fmt2(r.annual_cost/r.working_hrs)+" €/hr";}
+function updSiteLicBadge(si){const el=document.getElementById("slic-"+si);if(!el||!sites[si])return;el.textContent="~€"+Math.round(getSiteLicense(sites[si])).toLocaleString("de-DE")+"/yr";}
+
+// ══ MODULE SAVINGS TABLE ══
+function renderModTable(){
+  const tbl=document.getElementById("mod-tbl");
+  tbl.innerHTML="";
+  tbl.onclick=function(e){
+    const b=e.target.closest('.del-mod-btn');
+    if(b){deleteMod(+b.dataset.mi);}
+    const c=e.target.closest('.del-custom-btn');
+    if(c){removeCustomMod(+c.dataset.ci);}
+  };
+  const head=document.createElement("thead");
+  head.innerHTML='<tr><th style="min-width:130px;">Module</th><th>Tier</th><th>Role</th><th>Min saved/interaction</th><th>Interactions/person/yr</th><th></th></tr>';
+  tbl.appendChild(head);
+  mods.forEach((m,mi)=>{
+    m.roles.forEach((r,ri)=>{
+
+      const isFirst=ri===0;
+      const tr=document.createElement("tr");
+      if(isFirst)tr.style.borderTop="2px solid var(--border)";
+      tr.dataset.mi=mi; tr.dataset.ri=ri;
+      tr.innerHTML=`
+        ${isFirst?`<td rowspan="${m.roles.length}" style="vertical-align:middle;">
+          <input class="ninp" type="text" value="${m.label}" style="width:150px;font-size:12px;font-weight:600;margin-bottom:3px;"
+            oninput="mods[${mi}].label=this.value;recalc();">
+          <div><input class="ninp" type="text" value="${m.desc}" placeholder="Description (optional)"
+            style="width:150px;font-size:10px;color:var(--t3);"
+            oninput="mods[${mi}].desc=this.value;"></div>
+        </td>
+        <td rowspan="${m.roles.length}" style="vertical-align:middle;"><span class="badge ${BADGE_CLS[m.tier]}">${m.tier.toUpperCase()}</span></td>`:""}
+        <td><select class="rsel" onchange="mods[${mi}].roles[${ri}].role=this.value;renderModTable();recalc();">${ROLE_DEFS.map(rd=>`<option value="${rd.id}" ${rd.id===r.role?"selected":""}>${rd.label}</option>`).join("")}</select></td>
+        <td><input class="ninp" type="number" value="${r.mins}" min="1" max="480" onchange="mods[${mi}].roles[${ri}].mins=+this.value;renderModTable();recalc();"></td>
+        <td><input class="ninp" type="number" value="${r.interactions}" min="0" onchange="mods[${mi}].roles[${ri}].interactions=+this.value;renderModTable();recalc();" style="width:90px;"></td>
+
+        <td style="white-space:nowrap;">
+          ${isFirst?`<button class="btn" style="font-size:9px;padding:2px 7px;" onclick="mods[${mi}].roles.push({role:'operator',mins:10,interactions:100});renderModTable();recalc();" title="Add role row">+</button>`:""}
+          ${m.roles.length>1?`<button class="btn" style="font-size:9px;padding:2px 7px;" onclick="mods[${mi}].roles.splice(${ri},1);renderModTable();recalc();" title="Remove this role row">&#10005;</button>`:""}
+          ${isFirst?`<button class="btn del-mod-btn" data-mi="${mi}" style="font-size:9px;padding:2px 7px;color:var(--red);border-color:rgba(204,34,0,0.2);" title="Delete this module row">&#128465;</button>`:""}
+        </td>
+      `;
+      tbl.appendChild(tr);
+    });
+  });
+
+  // ── Additional savings rows ──
+  if(customMods.length>0){
+    const sepRow=document.createElement("tr");
+    sepRow.innerHTML=`<td colspan="6" style="padding:6px 10px;background:rgba(26,26,255,0.04);font-size:9px;font-family:var(--mono);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--blue);border-top:2px solid var(--border2);">Additional savings rows</td>`;
+    tbl.appendChild(sepRow);
+  }
+  customMods.forEach((m,ci)=>{
+    // Find the referenced module to get its tier and badge
+    const refMod = mods.find(x=>x.id===m.modId) || mods[0];
+    m.roles.forEach((r,ri)=>{
+      const isFirst=ri===0;
+      const tr=document.createElement("tr");
+      if(isFirst)tr.style.borderTop="1px solid var(--border)";
+      tr.innerHTML=`
+        ${isFirst?`<td rowspan="${m.roles.length}" style="vertical-align:middle;">
+          <select class="rsel" style="width:160px;font-size:12px;font-weight:600;margin-bottom:4px;"
+            onchange="customMods[${ci}].modId=this.value;renderModTable();renderSites();recalc();">
+            ${mods.map(mod=>`<option value="${mod.id}" ${mod.id===m.modId?"selected":""}>${mod.label}</option>`).join("")}
+          </select>
+          <div><input class="ninp" type="text" value="${m.desc}" placeholder="Description (optional)"
+            style="width:160px;font-size:10px;color:var(--t3);"
+            oninput="customMods[${ci}].desc=this.value;"></div>
+        </td>
+        <td rowspan="${m.roles.length}" style="vertical-align:middle;">
+          <span class="badge ${BADGE_CLS[refMod.tier]}">${refMod.tier.toUpperCase()}</span>
+        </td>`:""}
+        <td><select class="rsel" onchange="customMods[${ci}].roles[${ri}].role=this.value;renderModTable();renderSites();recalc();">${ROLE_DEFS.map(rd=>`<option value="${rd.id}" ${rd.id===r.role?"selected":""}>${rd.label}</option>`).join("")}</select></td>
+        <td><input class="ninp" type="number" value="${r.mins}" min="1" max="480" onchange="customMods[${ci}].roles[${ri}].mins=+this.value;renderSites();recalc();"></td>
+        <td><input class="ninp" type="number" value="${r.interactions}" min="0" onchange="customMods[${ci}].roles[${ri}].interactions=+this.value;renderSites();recalc();" style="width:90px;"></td>
+        <td>
+          ${isFirst?`<button class="btn" style="font-size:9px;padding:2px 7px;" onclick="customMods[${ci}].roles.push({role:'operator',mins:10,interactions:10});renderModTable();renderSites();recalc();">+</button>`:""}
+          ${m.roles.length>1?`<button class="btn" style="font-size:9px;padding:2px 7px;" onclick="customMods[${ci}].roles.splice(${ri},1);renderModTable();recalc();">&#10005;</button>`:""}
+          ${isFirst?`<button class="btn del-custom-btn" data-ci="${ci}" style="font-size:9px;padding:2px 7px;color:var(--red);border-color:rgba(204,34,0,0.2);" title="Delete this row">&#128465;</button>`:""}
+        </td>
+      `;
+      tbl.appendChild(tr);
+    });
+  });
+
+  // Add row button at the bottom
+  const addRow=document.createElement("tr");
+  addRow.innerHTML=`<td colspan="6" style="padding:8px 10px;">
+    <button class="btn pri" style="font-size:11px;" onclick="addCustomMod()">+ Add custom saving</button>
+  </td>`;
+  tbl.appendChild(addRow);
+}
+function resetMods(){mods=MOD_DEFS.map(m=>({...m,roles:m.roles.map(r=>({...r}))}));renderModTable();recalc();}
+function deleteMod(mi){mods.splice(mi,1);renderModTable();recalc();}
+function confirmDeleteMod(mi){
+  deleteMod(mi);
+}
+function restoreAllMods(){mods=MOD_DEFS.map(m=>({...m,roles:m.roles.map(r=>({...r}))}));renderModTable();recalc();}
+
+function addCustomMod(){
+  // Default to first module in MOD_DEFS
+  const ref = mods[0];
+  customMods.push({
+    uid:'custom_'+customModIdCounter++,
+    modId: ref.id,          // which module this is attributed to
+    desc:'',                // optional description
+    roles:[{role:'operator',mins:10,interactions:10}]
+  });
+  renderModTable();renderSites();recalc();
+}
+function removeCustomMod(ci){
+  customMods.splice(ci,1);
+  renderModTable();renderSites();recalc();
+}
+
+// ══ HELPERS ══
+function getHr(site,roleId){const r=site.roles.find(x=>x.id===roleId);return r&&r.working_hrs?r.annual_cost/r.working_hrs:0;}
+function getSiteRamp(site,yr){const ly=yr-site.deployYear+1;return ly>=1?1:0;}
+function getRecapture(){
+  const v=+document.getElementById("recapture-rate")?.value;
+  return isNaN(v)?0.4:Math.min(1,Math.max(0,v/100));
+}
+function calcModSavings(site,m){
+  // Interactions are per person per year — multiply by headcount of that role on this site
+  const base = m.roles.reduce((s,r)=>{
+    const hc = (site.roles.find(x=>x.id===r.role)||{headcount:0}).headcount;
+    return s + (r.interactions * hc * r.mins / 60) * getHr(site,r.role);
+  },0);
+  // Add any additional savings rows attributed to this module
+  const extra = customMods.filter(cm=>cm.modId===m.id).reduce((s,cm)=>{
+    return s + cm.roles.reduce((rs,r)=>{
+      const hc=(site.roles.find(x=>x.id===r.role)||{headcount:0}).headcount;
+      return rs+(r.interactions*hc*r.mins/60)*getHr(site,r.role);
+    },0);
+  },0);
+  return (base + extra) * getRecapture();
+}
+function getModSavings(site,m){
+  if(!site.moduleIds.includes(m.id))return 0;
+  return calcModSavings(site,m);
+}
+function getSiteSavings(site){
+  const stdSavings = mods.reduce((s,m)=>s+getModSavings(site,m),0);
+  const customSavings = customMods.reduce((s,m)=>{
+    // Custom rows only count if the referenced module is selected for this site
+    if(!site.moduleIds.includes(m.modId)) return s;
+    const raw = m.roles.reduce((rs,r)=>{
+      const hc=(site.roles.find(x=>x.id===r.role)||{headcount:0}).headcount;
+      return rs+(r.interactions*hc*r.mins/60)*getHr(site,r.role);
+    },0);
+    return s + raw * getRecapture();
+  },0);
+  return stdSavings + customSavings;
+}
+
+// ══ RECALC ══
+function recalc(){
+  if(!sites.length)return;
+  const esc=1+(+gv("c-esc")||3)/100;
+  const oneTime=(+gv("c-impl")||0)+(+gv("c-hw")||0)+(+gv("c-other")||0);
+  let yD=[],cSav=0,cCost=0,pbMonth=null;
+  for(let yr=1;yr<=5;yr++){
+    let sav=0,lic=0,ot=0;
+    sites.forEach(site=>{
+      const ramp=getSiteRamp(site,yr);
+      sav+=getSiteSavings(site)*ramp;
+      const ly=yr-site.deployYear+1;
+      if(ly>=1){lic+=getSiteLicense(site)*Math.pow(esc,ly-1);if(ly===1)ot+=oneTime;}
+    });
+    const cost=lic+ot,net=sav-cost;
+    cSav+=sav;cCost+=cost;
+    const cNet=cSav-cCost;
+    if(!pbMonth&&cNet>=0){
+      const prev=yD.length?yD[yD.length-1].cNet:(net-cost);
+      pbMonth=Math.max(1,(yr-1)*12+Math.ceil(12*(-prev)/Math.max(net,1)));
+    }
+    yD.push({yr,sav,lic,ot,cost,net,cSav,cCost,cNet});
+  }
+  const totalNet=cSav-cCost,roi=cCost>0?Math.round(totalNet/cCost*100):0;
+
+  ss("k-sav",fmtE(cSav));ss("k-tco",fmtE(cCost));
+  const kn=document.getElementById("k-net");
+  kn.textContent=fmtE(totalNet);
+  kn.className="kpi-val-hero "+(totalNet>=0?"green":"red");
+  const kc=document.getElementById("kc-net-card");
+  if(kc){kc.className="kpi-card "+(totalNet>=0?"kc-hero-green":"kc-hero-red");}
+  ss("k-pb",pbMonth?pbMonth+"mo":">60mo");ss("k-roi",roi+"%");
+
+  // Year timeline
+  document.getElementById("yr-timeline").innerHTML=yD.map(d=>`
+    <div class="yrc">
+      <div class="yrc-head">Year ${d.yr}</div>
+      <div class="yrc-body">
+        <div class="yrc-line">
+          <span class="yrc-lbl">Savings</span>
+          <span class="yrc-amount pos">${fmtE(d.sav)}</span>
+        </div>
+        <div class="yrc-line">
+          <span class="yrc-lbl">License</span>
+          <span class="yrc-amount neg">${fmtE(-d.lic)}</span>
+        </div>
+        ${d.ot?`<div class="yrc-line">
+          <span class="yrc-lbl">One-time</span>
+          <span class="yrc-amount neg">${fmtE(-d.ot)}</span>
+        </div>`:""}
+        <div class="yrc-divider"></div>
+      </div>
+      <div class="yrc-net-block">
+        <div class="yrc-net-lbl">Net this year</div>
+        <div class="yrc-net-val" style="color:${d.net>=0?"var(--green)":"var(--red)"}">${fmtE(d.net)}</div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">
+          <div class="yrc-net-lbl">Cumulative net</div>
+          <div style="font-family:var(--serif);font-size:12px;font-weight:700;color:${d.cNet>=0?"var(--green)":"var(--red)"};">${fmtE(d.cNet)}</div>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  // Module breakdown
+  const stdVals=mods.map(m=>({label:m.label,tier:m.tier,
+    val:yD.reduce((s,d)=>s+sites.reduce((s2,site)=>s2+getModSavings(site,m)*getSiteRamp(site,d.yr),0),0)
+  }));
+  // Aggregate custom rows by their modId — add to the same module's total
+  const custByMod={};
+  customMods.forEach(m=>{
+    const refMod=mods.find(x=>x.id===m.modId)||mods[0];
+    const val=yD.reduce((s,d)=>s+sites.reduce((s2,site)=>{
+      // Only count if the referenced module is active on this site
+      if(!site.moduleIds.includes(m.modId)) return s2;
+      const raw=m.roles.reduce((rs,r)=>{
+        const hc=(site.roles.find(x=>x.id===r.role)||{headcount:0}).headcount;
+        return rs+(r.interactions*hc*r.mins/60)*getHr(site,r.role);
+      },0);
+      return s2+raw*getRecapture()*getSiteRamp(site,d.yr);
+    },0),0);
+    if(!custByMod[m.modId]) custByMod[m.modId]={label:refMod.label,tier:refMod.tier,val:0};
+    custByMod[m.modId].val+=val;
+  });
+  // Merge: add custom values to matching standard modules, or add as new entry
+  const mergedVals=stdVals.map(mv=>({
+    ...mv, val:mv.val+(custByMod[mods.find(x=>x.label===mv.label)?.id]?.val||0)
+  }));
+  // Add any custom refs that have no match in std (shouldn't happen but safety)
+  const modVals=mergedVals.filter(x=>x.val>0).sort((a,b)=>b.val-a.val);
+  const maxV=modVals[0]?.val||1;
+  document.getElementById("bk-tbl").innerHTML=`
+    <thead><tr><th>Module</th><th>Tier</th><th style="width:30%;">Relative</th><th>5-yr savings</th></tr></thead>
+    <tbody>${modVals.map(m=>`<tr>
+      <td>${m.label}</td>
+      <td><span class="badge ${BADGE_CLS[m.tier]}">${m.tier.toUpperCase()}</span></td>
+      <td><div class="bk-bar"><div class="bk-fill" style="width:${Math.round(m.val/maxV*100)}%"></div></div></td>
+      <td>${fmtE(m.val)}</td>
+    </tr>`).join("")}</tbody>
+  `;
+
+  // Site table
+  document.getElementById("srt").innerHTML=`
+    <thead><tr><th>Site</th><th>FTEs</th><th>Deploy</th><th>5yr savings</th><th>5yr license</th><th>5yr one-time</th><th>5yr net</th></tr></thead>
+    <tbody>${sites.map(site=>{
+      const annSav=getSiteSavings(site),annLic=getSiteLicense(site);
+      const s5=yD.reduce((s,d)=>s+annSav*getSiteRamp(site,d.yr),0);
+      const l5=yD.reduce((s,d)=>{const ly=d.yr-site.deployYear+1;return ly>=1?s+annLic*Math.pow(esc,ly-1):s;},0);
+      const n5=s5-l5-oneTime;
+      return `<tr><td>${site.name}</td><td>${site.fte}</td><td>Yr ${site.deployYear}</td>
+        <td class="pos">${fmtE(s5)}</td><td class="neg">${fmtE(-l5)}</td><td class="neg">${fmtE(-oneTime)}</td>
+        <td class="${n5>=0?"pos":"neg"}">${fmtE(n5)}</td></tr>`;
+    }).join("")}</tbody>
+  `;
+
+  sites.forEach((_,si)=>updSiteLicBadge(si));
+  saveToStorage();
+}
+
+function gv(id){const e=document.getElementById(id);return e?e.value:0;}
+function ss(id,t){const e=document.getElementById(id);if(e)e.textContent=t;}
+function fmt2(n){return isFinite(n)?n.toFixed(2):"0.00";}
+function fmtE(n){const a=Math.abs(n),s=n<0?"-":"";return s+"€"+Math.round(a).toLocaleString("de-DE");}
+
+init();
+</script>
+
+<!-- ══ REVIEW PANEL ══ -->
+<div id="review-panel">
+  <div id="rp-header">
+    <div id="rp-title">
+      <span id="rp-dot"></span>
+      Review — ROI Calculator
+    </div>
+    <button id="rp-collapse" onclick="togglePanel()" title="Collapse">◀</button>
+  </div>
+  <div id="rp-body">
+    <input id="rp-name-inp" type="text" placeholder="Your name (reviewer)" maxlength="40" autocomplete="name">
+    <button id="rp-toggle-btn" onclick="toggleCommentMode()">
+      💬 Enable comment mode
+    </button>
+    <div class="rp-row">
+      <button class="rp-btn" onclick="toggleList()">📋 List (<span id="rp-count">0</span>)</button>
+      <button class="rp-btn" onclick="exportComments()">⬇ Export</button>
+    </div>
+    <button class="rp-btn" style="width:100%" onclick="toggleMarkersVisible()">👁 Hide comments</button>
+    <div id="rp-list" style="display:none;"></div>
+    <div id="rp-backend-tag">backend: Firebase (real-time)</div>
+  </div>
+</div>
+
+<!-- Comment input popup -->
+<div id="cm-popup">
+  <h4>💬 Add a comment</h4>
+  <textarea id="cm-text-inp" placeholder="Write your comment…" maxlength="500"></textarea>
+  <div class="cm-popup-btns">
+    <button onclick="cancelComment()">Cancel</button>
+    <button class="pri" onclick="submitComment()">Post</button>
+  </div>
+</div>
+
+<!-- Cursor hint -->
+<div id="comment-hint">Click anywhere to comment · Esc to cancel</div>
+
+<!-- Markers layer -->
+<div id="markers-layer" style="position:absolute;top:0;left:0;width:100%;pointer-events:none;"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBd6YbOEZgFkmGABuMz7LnfI33XNALSQ9c",
+  authDomain: "solvace-reviews.firebaseapp.com",
+  projectId: "solvace-reviews",
+  storageBucket: "solvace-reviews.firebasestorage.app",
+  messagingSenderId: "197430755300",
+  appId: "1:197430755300:web:c3c2f3d2e83b838215d1f1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const COLL = "roi_comments";
+
+let commentMode = false;
+let panelCollapsed = false;
+let listVisible = false;
+let markersVisible = true;
+let pendingX = 0, pendingY = 0;
+let allComments = [];
+
+// ── Live listener ──
+const q = query(collection(db, COLL), orderBy("ts", "asc"));
+onSnapshot(q, snap => {
+  allComments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderMarkers();
+  renderList();
+  updateCount();
+  document.getElementById("rp-dot").classList.add("live");
+});
+
+// ── Markers ──
+function renderMarkers(){
+  const layer = document.getElementById("markers-layer");
+  if(!markersVisible){ layer.innerHTML = ""; return; }
+  layer.innerHTML = "";
+  allComments.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "cm-marker";
+    el.style.left = c.x + "px";
+    el.style.top  = c.y + "px";
+    el.style.pointerEvents = "all";
+    el.textContent = i + 1;
+    el.title = `${c.author}: ${c.text}`;
+    el.onclick = () => scrollToComment(c.id);
+    layer.appendChild(el);
+  });
+  resizeLayer();
+}
+
+function resizeLayer(){
+  const layer = document.getElementById("markers-layer");
+  layer.style.height = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) + "px";
+}
+window.addEventListener("resize", resizeLayer);
+setTimeout(resizeLayer, 800);
+
+// ── List ──
+function renderList(){
+  const el = document.getElementById("rp-list");
+  if(!allComments.length){
+    el.innerHTML = '<div id="rp-empty">No comments yet.</div>';
+    return;
+  }
+  el.innerHTML = allComments.map((c, i) => `
+    <div class="rp-note-item" id="li-${c.id}" onclick="highlightMarker(${i})">
+      <button class="rp-note-del" onclick="event.stopPropagation();deleteComment('${c.id}')" title="Delete">✕</button>
+      <div class="rp-note-author">${escH(c.author || "Anonymous")}</div>
+      <div class="rp-note-text">${escH(c.text)}</div>
+      <div class="rp-note-date">${c.dateStr || ""}</div>
+    </div>`).join("");
+}
+
+function updateCount(){
+  document.getElementById("rp-count").textContent = allComments.length;
+}
+
+function escH(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ── Comment mode ──
+window.toggleCommentMode = function(){
+  commentMode = !commentMode;
+  document.body.classList.toggle("comment-mode", commentMode);
+  const btn = document.getElementById("rp-toggle-btn");
+  btn.classList.toggle("active", commentMode);
+  btn.textContent = commentMode ? "🛑 Disable comment mode" : "💬 Enable comment mode";
+  document.getElementById("comment-hint").classList.toggle("show", commentMode);
+};
+
+document.addEventListener("click", e => {
+  if(!commentMode) return;
+  if(e.target.closest("#review-panel") || e.target.closest("#cm-popup") || e.target.closest(".cm-marker")) return;
+  pendingX = e.pageX - 12;
+  pendingY = e.pageY - 12;
+  showPopup(e.clientX, e.clientY);
+});
+
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape"){ cancelComment(); if(commentMode) toggleCommentMode(); }
+  if((e.ctrlKey||e.metaKey) && e.key === "Enter" && document.getElementById("cm-popup").style.display === "block") submitComment();
+});
+
+function showPopup(cx, cy){
+  const p = document.getElementById("cm-popup");
+  p.style.display = "block";
+  let px = cx + 12, py = cy + 12;
+  if(px + 290 > window.innerWidth) px = cx - 292;
+  if(py + 180 > window.innerHeight) py = cy - 160;
+  p.style.left = px + "px"; p.style.top = py + "px";
+  document.getElementById("cm-text-inp").value = "";
+  setTimeout(() => document.getElementById("cm-text-inp").focus(), 50);
+}
+
+window.cancelComment = function(){
+  document.getElementById("cm-popup").style.display = "none";
+};
+
+window.submitComment = async function(){
+  const text = document.getElementById("cm-text-inp").value.trim();
+  if(!text) return;
+  const author = document.getElementById("rp-name-inp").value.trim() || "Anonymous";
+  localStorage.setItem("solvace_reviewer_name", author);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) + " · " +
+                  now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  await addDoc(collection(db, COLL), { x: pendingX, y: pendingY, author, text, dateStr, ts: serverTimestamp() });
+  cancelComment();
+  if(commentMode) toggleCommentMode();
+};
+
+window.deleteComment = async function(id){
+  await deleteDoc(doc(db, COLL, id));
+};
+
+// ── Panel controls ──
+window.togglePanel = function(){
+  panelCollapsed = !panelCollapsed;
+  document.getElementById("review-panel").classList.toggle("collapsed", panelCollapsed);
+  document.getElementById("rp-collapse").textContent = panelCollapsed ? "▶" : "◀";
+};
+
+window.toggleList = function(){
+  listVisible = !listVisible;
+  document.getElementById("rp-list").style.display = listVisible ? "flex" : "none";
+  if(listVisible) document.getElementById("rp-list").style.flexDirection = "column";
+};
+
+window.toggleMarkersVisible = function(){
+  markersVisible = !markersVisible;
+  document.querySelector(".rp-btn[onclick='toggleMarkersVisible()']").textContent =
+    markersVisible ? "👁 Hide comments" : "👁 Show comments";
+  renderMarkers();
+};
+
+window.exportComments = function(){
+  const rows = [["#","Author","Comment","Date","X","Y"]];
+  allComments.forEach((c,i) => rows.push([i+1, c.author||"", c.text||"", c.dateStr||"", c.x, c.y]));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  a.download = "roi_comments.csv";
+  a.click();
+};
+
+window.scrollToComment = function(id){
+  if(!listVisible) toggleList();
+  const el = document.getElementById("li-" + id);
+  if(el) el.scrollIntoView({behavior:"smooth", block:"nearest"});
+};
+
+window.highlightMarker = function(i){
+  const markers = document.querySelectorAll(".cm-marker");
+  if(markers[i]){ markers[i].scrollIntoView({behavior:"smooth", block:"center"}); }
+};
+
+// Restore name
+const saved = localStorage.getItem("solvace_reviewer_name");
+if(saved) document.getElementById("rp-name-inp").value = saved;
+
+</script>
+</body>
+</html>
